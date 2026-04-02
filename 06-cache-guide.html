@@ -1881,7 +1881,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!item) return;
       const target = document.getElementById(item.dataset.id);
       if (target && scroller) {
-        scroller.scrollTo({ top: target.offsetTop - 16, behavior: 'instant' });
+        smartScrollTo(target);
       }
       resultsEl.classList.remove('show');
       inputEl.value = '';
@@ -1927,6 +1927,14 @@ function toggleCat(hdr) {
 const anchors = document.querySelectorAll('.section-anchor[id]');
 const links   = document.querySelectorAll('.sb-link[href^="#"], .sb-page-link[href^="#"], .sb-contact-link[href^="#"]');
 const scroller = document.getElementById('mainScroll');
+function isMobile(){return window.innerWidth<=768;}
+function smartScrollTo(target){
+  if(isMobile()){
+    window.scrollTo({top:target.getBoundingClientRect().top+window.pageYOffset-60,behavior:'smooth'});
+  } else {
+    scroller.scrollTo({top:target.offsetTop-16,behavior:'instant'});
+  }
+}
 
 function updateActive() {
   let current = '';
@@ -1967,13 +1975,14 @@ function updateActive() {
   }
 }
 scroller.addEventListener('scroll', updateActive);
+window.addEventListener('scroll', function(){if(isMobile())updateActive();});
 updateActive();
 
 links.forEach(l => {
   l.addEventListener('click', e => {
     e.preventDefault();
     const target = document.querySelector(l.getAttribute('href'));
-    if (target) scroller.scrollTo({ top: target.offsetTop - 16, behavior: 'instant' });
+    if (target) smartScrollTo(target);
   });
 });
 
@@ -1982,7 +1991,7 @@ document.querySelectorAll('.dash-card[href^="#"]').forEach(c => {
   c.addEventListener('click', e => {
     e.preventDefault();
     const target = document.querySelector(c.getAttribute('href'));
-    if (target) scroller.scrollTo({ top: target.offsetTop - 16, behavior: 'instant' });
+    if (target) smartScrollTo(target);
   });
 });
 
