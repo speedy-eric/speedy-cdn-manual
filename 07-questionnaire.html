@@ -934,7 +934,7 @@ const scroller = document.getElementById('mainScroll');
 function isMobile(){return window.innerWidth<=768;}
 function smartScrollTo(target){
   if(isMobile()){
-    window.scrollTo({top:target.getBoundingClientRect().top+window.pageYOffset-60,behavior:'smooth'});
+    target.scrollIntoView({behavior:'smooth',block:'start'});
   } else {
     scroller.scrollTo({top:target.offsetTop-16,behavior:'instant'});
   }
