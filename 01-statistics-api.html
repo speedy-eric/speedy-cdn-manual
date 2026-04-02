@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S-CDN Statistics API 매뉴얼</title>
+<style>
+  body { font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif; max-width: 780px; margin: 0 auto; padding: 40px 20px; line-height: 1.85; color: #1a1a1a; font-size: 16px; }
+  .meta-box { background: #f1f3f5; border-radius: 10px; padding: 20px 24px; margin-bottom: 32px; font-size: 14px; line-height: 1.7; }
+  .meta-box p { margin: 4px 0; }
+  h1 { font-size: 26px; line-height: 1.4; margin-bottom: 24px; }
+  p { margin-bottom: 16px; }
+  .cta-banner { background: linear-gradient(135deg, #1a73e8, #0d47a1); color: #fff; border-radius: 12px; padding: 32px; text-align: center; margin: 40px 0; }
+  .cta-banner p { color: rgba(255,255,255,0.85); margin-bottom: 0; }
+  .cta-banner a { display: inline-block; background: #fff; color: #1a73e8; font-weight: 700; padding: 14px 32px; border-radius: 8px; text-decoration: none; margin-top: 16px; font-size: 15px; }
+</style>
+</head>
+<body>
+
+<div class="meta-box">
+  <p><strong>카테고리:</strong> 매뉴얼</p>
+  <p><strong>Slug:</strong> scdn-statistics-api</p>
+</div>
+
+<h1>S-CDN Statistics API 매뉴얼</h1>
+
+<p>S-CDN 통계 데이터(트래픽·히트율·응답 상태 등)를 REST API로 조회하는 인터페이스입니다. 단일 도메인(singledomain)과 전체 계정 합산(totaldomain) 두 가지 모드를 지원하며, HTTPS POST 방식으로 JSON 응답을 반환합니다.</p>
+
+<p><strong>인증:</strong> 요청 body의 common 객체에 id + password 또는 cloud_key_value(API Key) 포함</p>
+
+<p><strong>조회 간격:</strong> 5분 / 1시간 / 1일 — 조회 기간에 따라 선택 가능한 간격이 제한됩니다</p>
+
+<p><strong>제공 통계 17종:</strong> 전송량 · Traffic · HTTP 요청 건수 · 동시접속/방문자 · 컨텐츠 정보 · Hit/Miss Count · ISP/User Agent · 국가별 요청 · Origin 통계 · 40x/50x 컨텐츠 · HTTP Status · Origin Status · 스토리지 · 그룹별 합계 · 도메인 목록 · 에러 코드</p>
+
+<div class="cta-banner">
+  <p>인증 방식, 요청/응답 파라미터, 에러 코드 등 전체 내용을 확인하세요.</p>
+  <a href="https://speedy-eric.github.io/speedy-cdn-manual/01-statistics-api.html" target="_blank">전체 매뉴얼 보기 →</a>
+</div>
+
+</body>
+</html>

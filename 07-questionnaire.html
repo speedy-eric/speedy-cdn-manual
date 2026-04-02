@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S-CDN 매뉴얼 V0.1</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --sidebar-w: 264px;
+  --grad-l: #0792CD;
+  --grad-r: #1F2CBE;
+  --accent: #00A9FF;
+  --orange: #FBAE40;
+  --border: #e4eaf2;
+  --text: #1a1a2e;
+  --text-sub: #4a5568;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:'Noto Sans KR',sans-serif;-webkit-font-smoothing:antialiased;}
+
+.app{display:flex;height:100vh;overflow:hidden;}
+
+.sidebar{
+  width:var(--sidebar-w);flex-shrink:0;
+  background:#0d1117;
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+  border-right:1px solid #21262d;
+}
+.sidebar::-webkit-scrollbar{width:4px;}
+.sidebar::-webkit-scrollbar-thumb{background:#30363d;border-radius:2px;}
+
+.sb-header{
+  padding:18px 16px 14px;
+  border-bottom:1px solid #21262d;
+  display:flex;align-items:center;gap:10px;
+  position:sticky;top:0;z-index:10;
+  background:#0d1117;
+}
+.sb-header img{height:24px;opacity:.9;}
+.sb-title{font-size:12.5px;font-weight:700;color:#e6edf3;line-height:1.3;}
+.sb-sub{font-size:10px;color:#58a6ff;margin-top:3px;background:rgba(56,139,253,.12);padding:2px 8px;border-radius:20px;display:inline-block;letter-spacing:.4px;}
+
+/* ── L1: top-level category (API, 포털, FTP …) ── */
+.sb-cat{border-bottom:1px solid #21262d;}
+.sb-cat:last-child{border-bottom:none;}
+.sb-cat-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;cursor:pointer;
+  font-size:11px;font-weight:800;color:#8b949e;
+  letter-spacing:.6px;
+  transition:all .15s;user-select:none;
+}
+.sb-cat-header:hover{color:#e6edf3;background:rgba(255,255,255,.04);}
+.sb-cat-header.open{color:#e6edf3;}
+.sb-cat-header .sb-cat-icon{margin-right:8px;font-size:13px;opacity:.8;}
+.sb-cat-body{overflow:hidden;max-height:0;transition:max-height .35s ease;}
+.sb-cat-body.open{max-height:6000px;}
+.sb-chevron{transition:transform .22s;font-size:9px;opacity:.5;}
+.sb-cat-header.open .sb-chevron{transform:rotate(90deg);opacity:.8;}
+
+/* ── L2: sub-group inside category (Statistics, Purge …) ── */
+.sb-tree-group{border-bottom:none;}
+.sb-tree-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:7px 16px 7px 28px;cursor:pointer;
+  font-size:10px;font-weight:700;color:#6e7681;
+  letter-spacing:.9px;text-transform:uppercase;
+  transition:all .15s;user-select:none;
+}
+.sb-tree-header:hover{color:#c9d1d9;background:rgba(255,255,255,.04);}
+.sb-tree-header.open{color:#e6edf3;}
+.sb-tree-header.open .sb-chevron{transform:rotate(90deg);opacity:.8;}
+
+.sb-tree-body{overflow:hidden;max-height:0;transition:max-height .3s ease;}
+.sb-tree-body.open{max-height:1600px;}
+
+/* ── Links ── */
+.sb-link{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 16px 6px 36px;
+  font-size:12px;color:#8b949e;
+  text-decoration:none;
+  border-left:2px solid transparent;
+  transition:all .15s;cursor:pointer;
+}
+.sb-link:hover{color:#c9d1d9;background:rgba(255,255,255,.04);}
+.sb-link.active{color:#58a6ff;border-left-color:#58a6ff;background:rgba(56,139,253,.08);}
+.sb-link .method-dot{display:inline-block;width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.sb-link .method-dot.post{background:#3b82f6;}
+.sb-link .method-dot.get{background:#22c55e;}
+
+/* ── Placeholder page link (no sub-groups) ── */
+.sb-page-link{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 16px 7px 28px;
+  font-size:12px;color:#8b949e;
+  text-decoration:none;transition:all .15s;cursor:pointer;
+}
+.sb-page-link:hover{color:#c9d1d9;background:rgba(255,255,255,.04);}
+.sb-page-link.active{color:#58a6ff;}
+.sb-page-link .sb-badge{font-size:9px;color:#6e7681;background:#21262d;padding:1px 6px;border-radius:8px;margin-left:auto;}
+
+.sb-contact-link{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 16px;
+  font-size:10px;font-weight:700;color:#6e7681;
+  letter-spacing:.9px;text-transform:uppercase;
+  text-decoration:none;border-left:2px solid transparent;
+  border-top:1px solid #21262d;
+  transition:all .15s;cursor:pointer;
+}
+.sb-contact-link:hover{color:#c9d1d9;background:rgba(255,255,255,.04);}
+.sb-contact-link.active{color:#58a6ff;border-left-color:#58a6ff;}
+
+.main{flex:1;overflow-y:auto;background:#f0f2f5;}
+.main::-webkit-scrollbar{width:6px;}
+.main::-webkit-scrollbar-thumb{background:#c0c0c0;border-radius:3px;}
+
+.full-section{
+  background:#fff;
+  padding:52px 64px 60px;
+  border-bottom:2px solid #f0f2f5;
+  max-width:100%;
+}
+
+.api-section{
+  display:grid;
+  grid-template-columns:1fr 420px;
+  border-bottom:2px solid #f0f2f5;
+  background:#fff;
+}
+.api-left{
+  padding:48px 52px 60px;
+  border-right:1px solid #e8ecf2;
+  overflow:visible;
+}
+.api-right{
+  background:#1e1e2e;
+  padding:36px 24px 40px;
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow-y:auto;
+  align-self:start;
+}
+.api-right::-webkit-scrollbar{width:4px;}
+.api-right::-webkit-scrollbar-thumb{background:#30363d;border-radius:2px;}
+
+.method-row{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.method-badge{padding:4px 13px;border-radius:6px;font-size:12.5px;font-weight:700;font-family:'Fira Code',monospace;letter-spacing:.3px;}
+.method-badge.post{background:#dbeafe;color:#1d4ed8;}
+.method-badge.get{background:#dcfce7;color:#15803d;}
+.api-title{font-size:22px;font-weight:800;color:var(--text);}
+
+.endpoint-box{
+  background:#f8fafc;border:1px solid #e2e8f0;
+  border-radius:8px;padding:12px 18px;
+  font-family:'Fira Code',monospace;font-size:12px;
+  color:#374151;margin-bottom:8px;word-break:break-all;
+}
+.endpoint-note{font-size:11.5px;color:#6b7280;margin-bottom:22px;line-height:1.6;}
+
+.api-desc{font-size:13.5px;color:var(--text-sub);line-height:1.85;margin-bottom:26px;}
+
+.param-heading{
+  font-size:11px;font-weight:700;color:#6e7681;
+  letter-spacing:.8px;text-transform:uppercase;
+  margin:28px 0 12px;padding-bottom:7px;
+  border-bottom:1px solid #e4eaf2;
+}
+.param-heading:first-of-type{margin-top:0;}
+
+.param-tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+.param-tbl th{background:#f6f8fa;color:#57606a;font-weight:600;padding:9px 13px;text-align:left;border-bottom:2px solid #d0d7de;white-space:nowrap;}
+.param-tbl td{padding:9px 13px;border-bottom:1px solid #f0f2f5;color:#374151;vertical-align:top;line-height:1.6;}
+.param-tbl tr:last-child td{border-bottom:none;}
+.param-tbl tr:hover td{background:#fafbfc;}
+.pname{font-family:'Fira Code',monospace;font-size:11.5px;color:#cf222e;background:#fff5f5;padding:2px 7px;border-radius:4px;}
+.ptype{font-size:11px;color:#6e7681;font-style:italic;}
+.preq{display:inline-block;font-size:10px;font-weight:700;padding:1px 7px;border-radius:3px;}
+.preq.y{background:#fff0f0;color:#cf222e;}
+.preq.n{background:#f0f4ff;color:#0550ae;}
+
+.ib{background:#f0f9ff;border-left:3px solid #38bdf8;padding:11px 15px;border-radius:0 6px 6px 0;font-size:12px;color:#0c4a6e;margin:12px 0;line-height:1.7;}
+.ib.warn{background:#fffbeb;border-color:#f59e0b;color:#78350f;}
+.ib.ok{background:#f0fdf4;border-color:#22c55e;color:#14532d;}
+.ib strong{font-weight:700;}
+
+.rp-title{font-size:10.5px;font-weight:700;color:#6e7681;letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px;}
+.rp-tabs{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap;}
+.rp-tab{
+  padding:4px 13px;border-radius:5px;
+  font-size:11.5px;font-weight:600;cursor:pointer;
+  color:#8b949e;background:transparent;
+  border:1px solid #30363d;transition:all .15s;
+}
+.rp-tab:hover{color:#e6edf3;border-color:#58a6ff;}
+.rp-tab.active.xml{background:#1d4ed8;color:#fff;border-color:#1d4ed8;}
+.rp-tab.active.json{background:#16a34a;color:#fff;border-color:#16a34a;}
+.rp-tab.active.url{background:#9333ea;color:#fff;border-color:#9333ea;}
+.rp-pane{display:none;}
+.rp-pane.show{display:block;}
+
+.rp-sub{font-size:11px;font-weight:700;color:#8b949e;margin:14px 0 6px;display:flex;align-items:center;gap:8px;}
+.rp-sub::after{content:'';flex:1;height:1px;background:#30363d;}
+
+.code-blk{
+  background:#0d1117;border-radius:8px;
+  padding:14px 16px;
+  font-family:'Fira Code',monospace;font-size:.7rem;
+  line-height:1.72;color:#e6edf3;
+  overflow-x:hidden;white-space:pre-wrap;word-break:break-all;
+  margin-bottom:4px;
+}
+.kw{color:#ff7b72;} .str{color:#a5d6ff;} .num{color:#79c0ff;}
+.fn{color:#e3b341;} .cm{color:#6e7681;font-style:italic;}
+.tag-x{color:#7ee787;} .attr{color:#e3b341;}
+
+.copy-btn{
+  position:absolute;top:6px;right:6px;
+  background:#21262d;color:#c9d1d9;
+  border:1px solid #30363d;border-radius:5px;
+  padding:2px 10px;font-size:10px;
+  cursor:pointer;opacity:0;transition:opacity .15s;
+  z-index:2;font-family:'Fira Code',monospace;
+}
+.copy-btn:hover{background:#30363d;color:#fff;}
+div:has(> .code-blk):hover .copy-btn{opacity:1;}
+
+.fs-title{font-size:24px;font-weight:800;color:var(--text);margin-bottom:10px;}
+.fs-badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 12px;border-radius:20px;background:linear-gradient(135deg,var(--grad-l),var(--grad-r));color:#fff;margin-bottom:18px;letter-spacing:.5px;}
+.fs-desc{font-size:13.5px;color:var(--text-sub);line-height:1.85;margin-bottom:24px;}
+.fs-h2{font-size:16px;font-weight:700;color:var(--text);margin:30px 0 12px;padding-bottom:7px;border-bottom:2px solid #e8ecf2;}
+
+.feat-tbl{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:6px;}
+.feat-tbl th{background:linear-gradient(135deg,var(--grad-l),var(--grad-r));color:#fff;padding:10px 14px;text-align:left;font-weight:600;}
+.feat-tbl td{padding:10px 14px;border-bottom:1px solid #f0f2f5;color:#374151;vertical-align:top;line-height:1.6;}
+.feat-tbl tr:last-child td{border-bottom:none;}
+.feat-tbl tr:hover td{background:#fafbfc;}
+
+.env-tbl{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:6px;}
+.env-tbl th{background:#f6f8fa;color:#57606a;font-weight:600;padding:9px 14px;text-align:left;border-bottom:2px solid #d0d7de;white-space:nowrap;width:150px;}
+.env-tbl td{padding:9px 14px;border-bottom:1px solid #f0f2f5;color:#374151;line-height:1.6;}
+.env-tbl tr:last-child td{border-bottom:none;}
+
+.flow{display:flex;align-items:center;gap:8px;margin:20px 0;flex-wrap:wrap;}
+.flow-item{background:linear-gradient(135deg,#eef5ff,#f5f8ff);border:1px solid #d0dfef;border-radius:10px;padding:9px 18px;font-size:.88rem;font-weight:600;color:#1F2CBE;}
+.flow-arrow{color:#0792CD;font-size:18px;font-weight:700;}
+
+.err-tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+.err-tbl th{background:#f6f8fa;color:#57606a;font-weight:600;padding:8px 12px;text-align:left;border-bottom:2px solid #d0d7de;}
+.err-tbl td{padding:8px 12px;border-bottom:1px solid #f0f2f5;color:#374151;vertical-align:top;}
+.err-tbl tr:last-child td{border-bottom:none;}
+
+.tag-r{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;background:#fef2f2;color:#b91c1c;}
+.tag-b{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;background:#eff6ff;color:#1d4ed8;}
+.tag-g{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;background:#f0fdf4;color:#15803d;}
+
+code{font-family:'Fira Code',monospace;background:#f1f3f6;color:#cf222e;padding:2px 6px;border-radius:4px;font-size:.85em;}
+
+.section-anchor{display:block;height:0;}
+
+/* ── Info Grid / Card (가이드 콘텐츠용) ── */
+.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin:16px 0;}
+.info-card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:22px 24px;transition:all .2s;}
+.info-card:hover{border-color:var(--accent);box-shadow:0 4px 16px rgba(7,146,205,.08);}
+.info-card h4{font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #e8ecf2;}
+.info-card ul{margin:0;padding-left:18px;list-style:none;}
+.info-card ul li{position:relative;padding:5px 0 5px 14px;font-size:13px;color:var(--text-sub);line-height:1.7;}
+.info-card ul li::before{content:'•';position:absolute;left:0;color:var(--accent);font-weight:700;}
+
+/* ── Step Card ── */
+.step-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin:16px 0;}
+.step-card{background:#fff;border:1px solid #e4eaf2;border-radius:10px;padding:18px 22px;display:flex;gap:14px;align-items:flex-start;}
+.step-card .step-num{display:flex;align-items:center;justify-content:center;width:32px;height:32px;min-width:32px;border-radius:50%;background:linear-gradient(135deg,var(--grad-l),var(--grad-r));color:#fff;font-size:13px;font-weight:700;}
+.step-card .step-content{flex:1;}
+.step-card .step-content h4{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.step-card .step-content p{font-size:12.5px;color:var(--text-sub);line-height:1.6;margin:0;}
+
+/* ── Feature List ── */
+.feature-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin:14px 0;}
+.feature-item{background:#f8fafc;border-left:3px solid var(--accent);padding:12px 16px;border-radius:0 8px 8px 0;}
+.feature-item strong{font-size:12.5px;color:var(--text);display:block;margin-bottom:4px;}
+.feature-item span{font-size:12px;color:var(--text-sub);line-height:1.6;}
+
+.dom-label{display:inline-block;font-size:11px;font-weight:700;padding:4px 14px 4px 11px;border-radius:0 6px 6px 0;margin:20px 0 8px;letter-spacing:.2px;}
+.dom-label.single{background:#eff6ff;color:#1d4ed8;border-left:3px solid #1d4ed8;}
+.dom-label.total{background:#fdf4ff;color:#7e22ce;border-left:3px solid #7e22ce;}
+.dom-label:first-child{margin-top:0;}
+
+.rp-domain{display:inline-block;font-size:10px;font-weight:700;padding:3px 10px;border-radius:4px;margin:4px 0 6px;}
+.rp-domain.single{background:rgba(59,130,246,.18);color:#93c5fd;}
+.rp-domain.total{background:rgba(168,85,247,.18);color:#d8b4fe;}
+
+.api-group-header{
+  background:#fff;
+  border-bottom:1px solid #e8ecf2;
+  padding:12px 52px;
+  font-size:11px;font-weight:700;color:#6e7681;
+  letter-spacing:.9px;text-transform:uppercase;
+  display:flex;align-items:center;gap:8px;
+}
+.api-group-header::before{
+  content:'';width:3px;height:16px;border-radius:2px;
+  background:linear-gradient(var(--grad-l),var(--grad-r));
+}
+
+@media(max-width:1200px){
+  .api-section{grid-template-columns:1fr;}
+  .api-right{position:static;height:auto;}
+}
+
+
+/* ── Dashboard Landing ── */
+.dashboard{
+  padding:60px 48px 80px;
+  max-width:1100px;
+  margin:0 auto;
+}
+.dash-header{
+  text-align:center;
+  margin-bottom:48px;
+}
+.dash-header h1{
+  font-size:28px;font-weight:800;color:var(--text);
+  margin-bottom:8px;letter-spacing:-.5px;
+}
+.dash-header p{
+  font-size:15px;color:var(--text-sub);line-height:1.6;
+}
+.dash-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:20px;
+}
+.dash-card{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:28px 24px 24px;
+  text-align:center;
+  cursor:pointer;
+  transition:all .2s ease;
+  text-decoration:none;
+  color:inherit;
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+}
+.dash-card:hover{
+  border-color:var(--accent);
+  box-shadow:0 4px 20px rgba(0,120,255,.1);
+  transform:translateY(-3px);
+}
+.dash-icon{
+  width:64px;height:64px;border-radius:16px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;
+  flex-shrink:0;
+}
+.dash-icon.stats{background:linear-gradient(135deg,#e8f4fd,#d0e8ff);color:#1a73e8;}
+.dash-icon.purge{background:linear-gradient(135deg,#fef3e2,#fde5c0);color:#e8590c;}
+.dash-icon.upload{background:linear-gradient(135deg,#e6f9f0,#c6f0da);color:#059669;}
+.dash-icon.ftp{background:linear-gradient(135deg,#f3e8ff,#e4d0ff);color:#7c3aed;}
+.dash-icon.portal{background:linear-gradient(135deg,#e8eeff,#d0dcff);color:#4338ca;}
+.dash-icon.cache{background:linear-gradient(135deg,#fef2f2,#fde0e0);color:#dc2626;}
+.dash-icon.checklist{background:linear-gradient(135deg,#f0fdf4,#d1fae5);color:#15803d;}
+.dash-card-title{font-size:15px;font-weight:700;color:var(--text);}
+.dash-card-desc{font-size:12.5px;color:var(--text-sub);line-height:1.5;}
+.dash-card .dash-badge{
+  font-size:10px;color:#94a3b8;background:#f1f5f9;
+  padding:2px 8px;border-radius:10px;margin-top:2px;
+}
+
+/* ── Lightbox / Image Zoom ── */
+.zoomable-img {
+  cursor: zoom-in;
+  transition: opacity 0.2s;
+}
+.zoomable-img:hover {
+  opacity: 0.85;
+}
+#lightbox-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+  cursor: zoom-out;
+}
+#lightbox-overlay.active {
+  display: flex;
+}
+#lightbox-overlay img {
+  max-width: 92vw;
+  max-height: 92vh;
+  border-radius: 8px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  animation: lbFadeIn 0.2s ease;
+}
+@keyframes lbFadeIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+#lightbox-close {
+  position: fixed;
+  top: 18px; right: 24px;
+  color: #fff;
+  font-size: 32px;
+  cursor: pointer;
+  z-index: 10000;
+  line-height: 1;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+/* ── 사이드바 검색 ── */
+.sb-search{padding:10px 12px;border-bottom:1px solid #21262d;position:relative;}
+.sb-search-icon{position:absolute;left:20px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.6;pointer-events:none;}
+.sb-search input{
+  width:100%;box-sizing:border-box;padding:7px 10px 7px 32px;
+  background:#161b22;border:1px solid #30363d;border-radius:6px;
+  color:#c9d1d9;font-size:13px;outline:none;transition:border .2s;
+}
+.sb-search input::placeholder{color:#6e7681;}
+.sb-search input:focus{border-color:#58a6ff;}
+.sb-search-results{
+  display:none;position:absolute;left:12px;right:12px;top:calc(100% - 2px);
+  background:#1c2128;border:1px solid #30363d;border-radius:8px;
+  max-height:320px;overflow-y:auto;z-index:900;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);
+}
+.sb-search-results.show{display:block;}
+.sb-search-item{padding:8px 12px;cursor:pointer;border-bottom:1px solid #21262d;}
+.sb-search-item:last-child{border-bottom:none;}
+.sb-search-item:hover{background:rgba(56,139,253,.15);}
+.sri-title{font-size:13px;color:#e6edf3;font-weight:500;}
+.sri-group{font-size:11px;color:#58a6ff;margin-top:2px;}
+
+
+/* ── 다운로드 카드 ── */
+.dl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:24px;}
+.dl-card{
+  display:flex;align-items:center;gap:16px;padding:20px 24px;
+  background:#fff;border:1px solid #d0d7de;border-radius:12px;
+  text-decoration:none;color:#1f2328;
+  transition:border .2s,box-shadow .2s;
+}
+.dl-card:hover{border-color:#0969da;box-shadow:0 2px 12px rgba(9,105,218,.12);}
+.dl-icon{
+  flex-shrink:0;width:48px;height:48px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+  background:linear-gradient(135deg,#eff6ff,#dbeafe);
+}
+.dl-info{flex:1;min-width:0;}
+.dl-name{font-size:14px;font-weight:600;color:#1f2328;}
+.dl-desc{font-size:12px;color:#6e7681;margin-top:4px;line-height:1.5;}
+.dl-badge{
+  flex-shrink:0;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;
+  background:#eff6ff;color:#0969da;white-space:nowrap;
+}
+.dl-badge.xlsx{background:#ecfdf5;color:#15803d;}
+.dl-badge.zip{background:#fff7ed;color:#c2410c;}
+/* ── 대시보드 검색 ── */
+.dash-search{
+  max-width:520px;margin:0 auto 32px;position:relative;
+}
+.dash-search-icon{position:absolute;left:18px;top:50%;transform:translateY(-50%);font-size:15px;opacity:.5;pointer-events:none;}
+.dash-search input{
+  width:100%;box-sizing:border-box;padding:12px 16px 12px 42px;
+  background:#fff;border:1.5px solid #d0d7de;border-radius:12px;
+  font-size:15px;color:#1f2328;outline:none;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);transition:border .2s,box-shadow .2s;
+}
+.dash-search input::placeholder{color:#8b949e;}
+.dash-search input:focus{border-color:#0969da;box-shadow:0 0 0 3px rgba(9,105,218,.15);}
+.dash-search-results{
+  display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);
+  background:#fff;border:1px solid #d0d7de;border-radius:12px;
+  max-height:360px;overflow-y:auto;z-index:900;
+  box-shadow:0 8px 24px rgba(0,0,0,.12);
+}
+.dash-search-results.show{display:block;}
+.dash-search-item{padding:10px 16px;cursor:pointer;border-bottom:1px solid #f0f0f0;}
+.dash-search-item:last-child{border-bottom:none;}
+.dash-search-item:hover{background:#f8fafc;}
+.dsi-title{font-size:14px;color:#1f2328;font-weight:500;}
+.dsi-group{font-size:12px;color:#0969da;margin-top:2px;}
+</style>
+
+<body>
+<div class="app">
+
+  <!-- ── 사이드바 ── -->
+  <nav class="sidebar">
+    <div class="sb-header" style="cursor:default;">
+      <img src="https://www.speedykorea.com/images/logo/speedy-logo-white.svg" alt="Speedy" onerror="this.style.display='none'">
+      <div>
+        <div class="sb-title">S-CDN 매뉴얼</div>
+        <span class="sb-sub">CDN 문진표</span>
+      </div>
+    </div>
+  <!-- ━━ CDN 문진표 ━━ -->
+  <div class="sb-cat">
+    <div class="sb-cat-header" onclick="toggleCat(this)">
+      <span><span class="sb-cat-icon">📋</span>CDN 문진표</span><span class="sb-chevron">▶</span>
+    </div>
+    <div class="sb-cat-body">
+      <div class="sb-tree-group">
+        <div class="sb-tree-header" onclick="toggleGroup(this)">CDN 문진표<span class="sb-chevron">▶</span></div>
+        <div class="sb-tree-body">
+          <a class="sb-link" href="#checklist-overview">문진표 다운로드</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contact -->
+  <a class="sb-contact-link" href="#contact">Contact</a>
+</aside>
+
+<main class="main" id="mainScroll">
+
+  </nav>
+
+  <!-- ── 본문 ── -->
+  <main class="main" id="mainScroll">
+<span id="checklist-overview" class="section-anchor"></span>
+<span id="checklist-initial" class="section-anchor"></span>
+<span id="checklist-setup-basic" class="section-anchor"></span>
+<span id="checklist-setup-option" class="section-anchor"></span>
+<section class="full-section">
+  <div class="fs-badge">DOWNLOAD</div>
+  <h1 class="fs-title">CDN 서비스 문진표</h1>
+  <p class="fs-desc">CDN 캐시 서비스 도입 시 고객사로부터 수집해야 하는 정보를 정리한 문진표입니다.<br>아래 파일을 다운로드하여 사용하세요.</p>
+
+  <div class="dl-grid">
+    <a class="dl-card" href="CDN_초기문진표.xlsx" download>
+      <div class="dl-icon">📝</div>
+      <div class="dl-info">
+        <div class="dl-name">캐시 서비스 초기 문진표</div>
+        <div class="dl-desc">서비스 검토 및 초기 상담 시 기본 정보 수집 · 15개 항목</div>
+      </div>
+      <div class="dl-badge xlsx">XLSX</div>
+    </a>
+    <a class="dl-card" href="CDN_셋업문진표_기본사항.xlsx" download>
+      <div class="dl-icon">📋</div>
+      <div class="dl-info">
+        <div class="dl-name">셋업 문진표 — 기본사항</div>
+        <div class="dl-desc">서비스 구축을 위한 상세 정보 수집 · 21개 항목</div>
+      </div>
+      <div class="dl-badge xlsx">XLSX</div>
+    </a>
+    <a class="dl-card" href="CDN_셋업문진표_선택사항.xlsx" download>
+      <div class="dl-icon">⚙️</div>
+      <div class="dl-info">
+        <div class="dl-name">셋업 문진표 — 선택사항</div>
+        <div class="dl-desc">추가 설정이 필요할 경우 작성 · 16개 항목</div>
+      </div>
+      <div class="dl-badge xlsx">XLSX</div>
+    </a>
+    <a class="dl-card" href="첨부6.업로더프로그램_flow_js.zip" download>
+      <div class="dl-icon">📦</div>
+      <div class="dl-info">
+        <div class="dl-name">업로더 프로그램 (flow.js)</div>
+        <div class="dl-desc">CDN 스토리지 파일 업로드용 JavaScript 모듈</div>
+      </div>
+      <div class="dl-badge zip">ZIP</div>
+    </a>
+  </div>
+</section>
+
+
+<span id="contact" class="section-anchor"></span>
+<section class="full-section">
+  <h1 class="fs-title">Contact</h1>
+  <p class="fs-desc">📧 기술 지원 — <strong>speedy@speedykorea.com</strong></p>
+  <div class="ib" style="margin-top:16px">© 2026 Speedy. All rights reserved.</div>
+</section>
+
+  </main>
+
+</div>
+
+<!-- ── 문의하기 버튼 ── -->
+<a href="https://www.speedykorea.com/contact?utm_source=cdn-manual&utm_medium=docs&utm_campaign=scdn-manual-cta&utm_content=07-questionnaire"
+   target="_blank"
+   style="position:fixed;bottom:28px;left:28px;z-index:9999;
+          background:#1a73e8;color:#fff;font-weight:700;font-size:14px;
+          padding:12px 20px;border-radius:50px;text-decoration:none;
+          box-shadow:0 4px 16px rgba(26,115,232,.45);
+          display:flex;align-items:center;gap:8px;">
+  💬 문의하기
+</a>
+
+<script>
+
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║  ★ 다운로드 파일 도메인 설정 ★                              ║
+   ║  웹 서버 배포 시 아래 URL을 해당 도메인으로 변경하세요.      ║
+   ║  예) 'https://docs.speedycdn.com/files/'                   ║
+   ║  로컬 사용 시 빈 문자열('') 그대로 두면 상대경로로 동작합니다. ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+const DOWNLOAD_BASE_URL = '';  // ← ★ 도메인 URL 입력 ★
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (DOWNLOAD_BASE_URL) {
+    document.querySelectorAll('.dl-card[download]').forEach(function(a) {
+      var file = a.getAttribute('href');
+      if (file && !file.startsWith('http')) {
+        a.setAttribute('href', DOWNLOAD_BASE_URL + file);
+      }
+    });
+  }
+});
+
+/* ── 통합 검색 ── */
+const searchIndex = [
+  // ── Statistics API ──
+  {id:'stats-overview',   title:'Statistics API 개요 / 인증',       group:'Statistics API', kw:'통계 api 시스템 개요 인증 statistics overview auth key'},
+  {id:'stats-single-common-params', title:'Single Domain 공통 파라미터', group:'Statistics API', kw:'싱글 도메인 공통 파라미터 single domain common params request'},
+  {id:'stats-transfer',   title:'전송량 (Transfer)',               group:'Statistics API', kw:'전송량 transfer 통계 바이트 byte 트래픽'},
+  {id:'stats-traffic',    title:'Traffic (대역폭)',                 group:'Statistics API', kw:'트래픽 traffic 대역폭 bandwidth bps'},
+  {id:'stats-requestcount', title:'HTTP 요청 건수 (Request Count)', group:'Statistics API', kw:'http 요청 건수 request count 카운트'},
+  {id:'stats-concurrent', title:'동시 접속자 수 / 방문자 수',        group:'Statistics API', kw:'동시 접속자 방문자 concurrent visitor'},
+  {id:'stats-contents',   title:'컨텐츠 정보 (Contents)',           group:'Statistics API', kw:'컨텐츠 콘텐츠 정보 contents url 순위'},
+  {id:'stats-hitcount',   title:'Hit/Miss Count',                  group:'Statistics API', kw:'히트 미스 hit miss count 캐시 cache'},
+  {id:'stats-isp',        title:'ISP / User Agent',                group:'Statistics API', kw:'isp 통신사 user agent 브라우저'},
+  {id:'stats-country',    title:'국가별 요청 건수 (Country)',        group:'Statistics API', kw:'국가 country 요청 건수 지역'},
+  {id:'stats-origin',     title:'Origin 통계',                     group:'Statistics API', kw:'오리진 origin 통계 원본 서버'},
+  {id:'stats-contentserror', title:'40x/50x 컨텐츠 에러',          group:'Statistics API', kw:'40x 50x 에러 error 컨텐츠 contents 404 500'},
+  {id:'stats-httpstatus', title:'HTTP Status 정보별 수',            group:'Statistics API', kw:'http status 상태 코드 200 301 403 404 500'},
+  {id:'stats-originstatus', title:'Origin HTTP Status 정보별 수',   group:'Statistics API', kw:'origin 오리진 http status 상태 코드'},
+  {id:'stats-storage',    title:'스토리지 사용량 (Storage)',         group:'Statistics API', kw:'스토리지 storage 사용량 용량 디스크'},
+  {id:'stats-groupsum',   title:'그룹별 합계 (Group Sum)',          group:'Statistics API', kw:'그룹 group sum 합계 도메인'},
+  {id:'stats-domainlist', title:'도메인 목록 조회',                  group:'Statistics API', kw:'도메인 목록 조회 domain list'},
+  {id:'stats-errors',     title:'Statistics 에러 코드',             group:'Statistics API', kw:'에러 코드 error code statistics 통계'},
+
+  // ── Purge API ──
+  {id:'purge-overview',   title:'Purge API 개요',                  group:'Purge API', kw:'퍼지 purge api 개요 시스템 캐시 삭제 무효화'},
+  {id:'purge-post-purge', title:'Purge 실행 (POST)',               group:'Purge API', kw:'퍼지 purge 실행 post 요청 캐시 삭제'},
+  {id:'purge-get-purge',  title:'Purge 실행 (GET)',                group:'Purge API', kw:'퍼지 purge 실행 get 요청 캐시 삭제'},
+  {id:'purge-post-result', title:'Purge 결과 조회 (POST)',          group:'Purge API', kw:'퍼지 purge 결과 조회 post 상태'},
+  {id:'purge-get-result', title:'Purge 결과 조회 (GET)',            group:'Purge API', kw:'퍼지 purge 결과 조회 get 상태'},
+  {id:'purge-errors',     title:'Purge 에러 코드',                 group:'Purge API', kw:'퍼지 purge 에러 코드 error'},
+
+  // ── Upload API ──
+  {id:'upload-overview',  title:'Upload API 개요',                 group:'Upload API', kw:'업로드 upload api 개요 시스템 스토리지'},
+  {id:'upload-flow',      title:'Upload (flow.js)',                group:'Upload API', kw:'업로드 upload flow.js 파일 전송'},
+  {id:'upload-listup',    title:'Listup — CDN Storage 조회',       group:'Upload API', kw:'리스트 listup cdn storage 조회 파일 목록'},
+  {id:'upload-delete',    title:'Delete — 경로 삭제',               group:'Upload API', kw:'삭제 delete 경로 파일 디렉토리'},
+  {id:'upload-unzip',     title:'UnZIP — 압축 해제',               group:'Upload API', kw:'압축 해제 unzip zip 파일'},
+  {id:'upload-copy',      title:'Copy / Move',                    group:'Upload API', kw:'복사 이동 copy move 파일'},
+  {id:'upload-mkdir',     title:'Mkdir / Rename',                 group:'Upload API', kw:'디렉토리 생성 mkdir rename 이름 변경'},
+  {id:'upload-download',  title:'Download',                       group:'Upload API', kw:'다운로드 download 파일'},
+  {id:'upload-put',       title:'Upload (PUT)',                   group:'Upload API', kw:'업로드 upload put 파일 전송'},
+  {id:'upload-errors',    title:'Upload 에러 코드',                group:'Upload API', kw:'업로드 upload 에러 코드 error'},
+
+  // ── 포털 매뉴얼 ──
+  {id:'portal-overview',  title:'User Portal 사용자 매뉴얼',       group:'포털 매뉴얼', kw:'포털 portal 사용자 매뉴얼 user 개요'},
+  {id:'portal-login',     title:'로그인',                          group:'포털 매뉴얼', kw:'포털 portal 로그인 login 인증'},
+  {id:'portal-apikey',    title:'API Key 관리',                   group:'포털 매뉴얼', kw:'포털 portal api key 키 관리'},
+  {id:'portal-dashboard', title:'대시보드',                         group:'포털 매뉴얼', kw:'포털 portal 대시보드 dashboard 현황'},
+  {id:'portal-traffic',   title:'실시간 트래픽 통계',               group:'포털 매뉴얼', kw:'포털 portal 실시간 트래픽 통계 traffic'},
+  {id:'portal-transfer',  title:'실시간 전송량 통계',               group:'포털 매뉴얼', kw:'포털 portal 실시간 전송량 통계 transfer'},
+  {id:'portal-contents',  title:'컨텐츠 순위',                     group:'포털 매뉴얼', kw:'포털 portal 컨텐츠 콘텐츠 순위 contents'},
+  {id:'portal-request',   title:'Request',                        group:'포털 매뉴얼', kw:'포털 portal request 요청'},
+  {id:'portal-concurrent', title:'동시 접속자',                    group:'포털 매뉴얼', kw:'포털 portal 동시 접속자 concurrent'},
+  {id:'portal-hitrate',   title:'히트율',                          group:'포털 매뉴얼', kw:'포털 portal 히트율 hit rate 캐시'},
+  {id:'portal-visitor',   title:'방문자',                          group:'포털 매뉴얼', kw:'포털 portal 방문자 visitor'},
+  {id:'portal-isp',       title:'ISP 통계',                       group:'포털 매뉴얼', kw:'포털 portal isp 통신사 통계'},
+  {id:'portal-success',   title:'Success 통계',                   group:'포털 매뉴얼', kw:'포털 portal success 성공 통계'},
+  {id:'portal-useragent', title:'User Agent 통계',                group:'포털 매뉴얼', kw:'포털 portal user agent 브라우저 통계'},
+  {id:'portal-country',   title:'국가별 통계',                     group:'포털 매뉴얼', kw:'포털 portal 국가 country 통계'},
+  {id:'portal-storage',   title:'스토리지 사용량',                  group:'포털 매뉴얼', kw:'포털 portal 스토리지 storage 사용량'},
+  {id:'portal-purge',     title:'퍼지 (Purge)',                   group:'포털 매뉴얼', kw:'포털 portal 퍼지 purge 캐시 삭제'},
+  {id:'portal-servicegroup', title:'서비스 그룹 설정',             group:'포털 매뉴얼', kw:'포털 portal 서비스 그룹 설정 service group'},
+  {id:'portal-subaccount', title:'서브 계정 관리',                 group:'포털 매뉴얼', kw:'포털 portal 서브 계정 관리 sub account'},
+  {id:'portal-menuauth',  title:'메뉴 권한 정보',                  group:'포털 매뉴얼', kw:'포털 portal 메뉴 권한 정보 menu auth 권한'},
+  {id:'portal-report',    title:'리포트 설정',                     group:'포털 매뉴얼', kw:'포털 portal 리포트 report 설정 보고서'},
+
+  // ── FTP 업로드 ──
+  {id:'ftp-overview',     title:'FTP 개요',                       group:'FTP 업로드', kw:'ftp 개요 업로드 파일질라 filezilla'},
+  {id:'ftp-install',      title:'설치 및 삭제',                    group:'FTP 업로드', kw:'ftp 설치 삭제 install 파일질라'},
+  {id:'ftp-usage',        title:'사용 방법',                       group:'FTP 업로드', kw:'ftp 사용 방법 usage 접속 연결'},
+  {id:'ftp-charset',      title:'문자셋 설정',                     group:'FTP 업로드', kw:'ftp 문자셋 charset 인코딩 utf-8'},
+  {id:'ftp-sitemanager',  title:'사이트 관리자',                   group:'FTP 업로드', kw:'ftp 사이트 관리자 site manager 내보내기 가져오기'},
+  {id:'ftp-remotecopy',   title:'원격지 파일 관리',                group:'FTP 업로드', kw:'ftp 원격 파일 관리 remote copy'},
+  {id:'ftp-autopurge',    title:'자동 퍼지 기능',                  group:'FTP 업로드', kw:'ftp 자동 퍼지 auto purge 캐시'},
+  {id:'ftp-manualpurge',  title:'수동 퍼지 기능',                  group:'FTP 업로드', kw:'ftp 수동 퍼지 manual purge 캐시'},
+
+  // ── 캐시설정 ──
+  {id:'cache-overview',   title:'CDN 기본 설정 / IP대역 / Speed Limit', group:'캐시설정 가이드', kw:'캐시 cache cdn 기본 설정 ip 대역 speed limit'},
+  {id:'cache-default',    title:'CDN 기본 설정',                   group:'캐시설정 가이드', kw:'캐시 cache cdn 기본 설정 ttl 만료'},
+  {id:'cache-retention',  title:'조회기간 별 보관기간',             group:'캐시설정 가이드', kw:'조회 기간 보관 기간 retention 데이터'},
+  {id:'cache-edge',       title:'CDN 엣지 대역',                  group:'캐시설정 가이드', kw:'cdn 엣지 edge 대역 ip 서버'},
+  {id:'cache-ratelimit',  title:'Rate Limit',                     group:'캐시설정 가이드', kw:'rate limit 제한 요청 속도 캐시'},
+  {id:'cache-speedlimit', title:'Speed Limit',                    group:'캐시설정 가이드', kw:'speed limit 속도 제한 대역폭 캐시'},
+
+  // ── CDN 문진표 ──
+  {id:'checklist-overview',    title:'CDN 서비스 문진표',           group:'CDN 문진표', kw:'cdn 서비스 문진표 checklist 체크리스트'},
+  {id:'checklist-initial',     title:'캐시 서비스 초기 문진표',     group:'CDN 문진표', kw:'캐시 서비스 초기 문진표 initial checklist'},
+  {id:'checklist-setup-basic', title:'셋업 문진표 — 기본사항',     group:'CDN 문진표', kw:'셋업 setup 문진표 기본 사항 basic checklist'},
+  {id:'checklist-setup-option', title:'셋업 문진표 — 선택사항',    group:'CDN 문진표', kw:'셋업 setup 문진표 선택 사항 option checklist'},
+
+  // ── CDN 기초 ──
+  {id:'cdn-how-it-works', title:'CDN 동작 원리 / Cache HIT·MISS',  group:'CDN 기초', kw:'cdn 동작 원리 cache hit miss 캐시 엣지 오리진'},
+  {id:'cert-overview',    title:'인증서 개요 (SSL/TLS)',            group:'CDN 기초', kw:'인증서 ssl tls certificate 개요 dv ov ev'},
+  {id:'cert-deploy',      title:'인증서 적용 / 갱신',               group:'CDN 기초', kw:'인증서 적용 갱신 deploy renewal csr openssl'},
+  {id:'cert-casestudy',   title:'인증서 실무 사례',                 group:'CDN 기초', kw:'인증서 실무 사례 case study 와일드카드 wildcard'},
+  {id:'cname-overview',   title:'CNAME 개요 / 형식',               group:'CDN 기초', kw:'cname 개요 형식 dns 도메인 포인팅'},
+  {id:'cname-setup',      title:'CNAME 설정 / 확인',               group:'CDN 기초', kw:'cname 설정 확인 dns 레코드 nslookup dig'},
+  {id:'cname-cautions',   title:'CNAME 주의사항',                   group:'CDN 기초', kw:'cname 주의사항 ttl dns 전파 apex root'},
+
+  // ── Storage Mount ──
+  {id:'mount-overview',   title:'Storage Mount 개요',              group:'Storage Mount', kw:'스토리지 mount 마운트 개요 rclone ftp sftp'},
+  {id:'mount-linux-ftp',  title:'Storage Mount (Linux)',           group:'Storage Mount', kw:'리눅스 linux mount 마운트 rclone ftp sftp fuse'},
+  {id:'mount-windows',    title:'Storage Mount (Windows)',         group:'Storage Mount', kw:'윈도우 windows mount 마운트 filezilla ftp'},
+  {id:'mount-cloud',      title:'Storage Mount (Cloud)',           group:'Storage Mount', kw:'클라우드 cloud mount s3fs nhn object storage'},
+  {id:'mount-errors',     title:'Storage Mount 에러',              group:'Storage Mount', kw:'스토리지 mount 마운트 에러 error fuse 트러블슈팅'},
+
+  // ── Origin 통계 ──
+  {id:'origstat-overview', title:'Origin Statistics 개요',          group:'Origin 통계', kw:'오리진 origin statistics 통계 개요 원본'},
+  {id:'origstat-requestcount', title:'Origin Request Count',       group:'Origin 통계', kw:'오리진 origin request count 요청 건수'},
+  {id:'origstat-content',  title:'Origin Content 정보',            group:'Origin 통계', kw:'오리진 origin content 컨텐츠 정보'},
+  {id:'origstat-usecase',  title:'Origin 통계 활용 사례',           group:'Origin 통계', kw:'오리진 origin 통계 활용 사례 usecase 분석'},
+
+  // ── 스트리밍 ──
+  {id:'stream-overview',  title:'스트리밍 개요',                    group:'스트리밍', kw:'스트리밍 streaming 개요 hls rtmp vod live'},
+  {id:'stream-live-hls',  title:'LIVE HLS',                       group:'스트리밍', kw:'라이브 live hls m3u8 ts 세그먼트 wowza'},
+  {id:'stream-live-rtmp', title:'LIVE RTMP',                      group:'스트리밍', kw:'라이브 live rtmp 1935 인코더 obs wowza'},
+  {id:'stream-vod-hls',   title:'VOD HLS',                        group:'스트리밍', kw:'vod hls m3u8 다시보기 adaptive bitrate'},
+  {id:'stream-vod-mp4',   title:'VOD MP4 (PD)',                   group:'스트리밍', kw:'vod mp4 progressive download pd 다운로드'},
+
+  // ── Contact ──
+  {id:'contact',          title:'Contact',                        group:'Contact', kw:'contact 연락처 문의 이메일 전화'},
+];
+
+function doSearch(query, resultsEl, isDash) {
+  if (!query.trim()) { resultsEl.classList.remove('show'); return; }
+  const tokens = query.toLowerCase().split(/\s+/);
+  const matches = searchIndex.filter(item =>
+    tokens.every(t => item.kw.includes(t))
+  );
+  const itemCls  = isDash ? 'dash-search-item' : 'sb-search-item';
+  const titleCls = isDash ? 'dsi-title' : 'sri-title';
+  const groupCls = isDash ? 'dsi-group' : 'sri-group';
+
+  if (!matches.length) {
+    resultsEl.innerHTML = '<div class="' + itemCls + '"><div class="' + titleCls + '" style="color:#6e7681">검색 결과 없음</div></div>';
+  } else {
+    resultsEl.innerHTML = matches.map(m =>
+      '<div class="' + itemCls + '" data-id="' + m.id + '">' +
+      '<div class="' + titleCls + '">' + m.title + '</div>' +
+      '<div class="' + groupCls + '">' + m.group + '</div></div>'
+    ).join('');
+  }
+  resultsEl.classList.add('show');
+}
+
+/* 이벤트 바인딩 */
+document.addEventListener('DOMContentLoaded', function() {
+  const sbInput   = document.getElementById('sidebarSearch');
+  const sbResults = document.getElementById('sidebarResults');
+  const dsInput   = document.getElementById('dashSearch');
+  const dsResults = document.getElementById('dashResults');
+  const scroller  = document.getElementById('mainScroll');
+
+  function handleInput(input, results, isDash) {
+    input.addEventListener('input', function() {
+      doSearch(this.value, results, isDash);
+    });
+  }
+  if (sbInput && sbResults) handleInput(sbInput, sbResults, false);
+  if (dsInput && dsResults) handleInput(dsInput, dsResults, true);
+
+  function handleClick(resultsEl, inputEl) {
+    resultsEl.addEventListener('click', function(e) {
+      const item = e.target.closest('[data-id]');
+      if (!item) return;
+      const target = document.getElementById(item.dataset.id);
+      if (target && scroller) {
+        scroller.scrollTo({ top: target.offsetTop - 16, behavior: 'instant' });
+      }
+      resultsEl.classList.remove('show');
+      inputEl.value = '';
+    });
+  }
+  if (sbResults && sbInput) handleClick(sbResults, sbInput);
+  if (dsResults && dsInput) handleClick(dsResults, dsInput);
+
+  /* 외부 클릭 시 닫기 */
+  document.addEventListener('click', function(e) {
+    if (sbResults && !e.target.closest('.sb-search')) sbResults.classList.remove('show');
+    if (dsResults && !e.target.closest('.dash-search')) dsResults.classList.remove('show');
+  });
+
+  /* ESC 키 */
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      if (sbResults) { sbResults.classList.remove('show'); sbInput.value = ''; }
+      if (dsResults) { dsResults.classList.remove('show'); dsInput.value = ''; }
+    }
+  });
+});
+
+
+function switchTab(btn, group, type) {
+  const section = btn.closest('.api-right');
+  section.querySelectorAll('.rp-tab').forEach(t => t.classList.remove('active'));
+  section.querySelectorAll('.rp-pane').forEach(p => p.classList.remove('show'));
+  btn.classList.add('active', type);
+  const pane = section.querySelector('#' + group + '-' + type);
+  if (pane) pane.classList.add('show');
+}
+
+function toggleGroup(hdr) {
+  hdr.classList.toggle('open');
+  hdr.nextElementSibling.classList.toggle('open');
+}
+function toggleCat(hdr) {
+  hdr.classList.toggle('open');
+  hdr.nextElementSibling.classList.toggle('open');
+}
+
+const anchors = document.querySelectorAll('.section-anchor[id]');
+const links   = document.querySelectorAll('.sb-link[href^="#"], .sb-page-link[href^="#"], .sb-contact-link[href^="#"]');
+const scroller = document.getElementById('mainScroll');
+
+function updateActive() {
+  let current = '';
+  anchors.forEach(a => {
+    if (a.getBoundingClientRect().top <= 80) current = a.id;
+  });
+  let activeTreeBody = null;
+  let activeCatBody = null;
+  links.forEach(l => {
+    const match = l.getAttribute('href') === '#' + current;
+    l.classList.toggle('active', match);
+    if (match) {
+      activeTreeBody = l.closest('.sb-tree-body');
+      activeCatBody = l.closest('.sb-cat-body');
+    }
+  });
+  if (!activeTreeBody && !activeCatBody) return;
+  // Close all tree bodies/cat bodies, then open only the active one
+  document.querySelectorAll('.sb-tree-body.open').forEach(b => {
+    if (b !== activeTreeBody) {
+      b.classList.remove('open');
+      b.previousElementSibling.classList.remove('open');
+    }
+  });
+  document.querySelectorAll('.sb-cat-body.open').forEach(b => {
+    if (b !== activeCatBody) {
+      b.classList.remove('open');
+      b.previousElementSibling.classList.remove('open');
+    }
+  });
+  if (activeTreeBody && !activeTreeBody.classList.contains('open')) {
+    activeTreeBody.classList.add('open');
+    activeTreeBody.previousElementSibling.classList.add('open');
+  }
+  if (activeCatBody && !activeCatBody.classList.contains('open')) {
+    activeCatBody.classList.add('open');
+    activeCatBody.previousElementSibling.classList.add('open');
+  }
+}
+scroller.addEventListener('scroll', updateActive);
+updateActive();
+
+links.forEach(l => {
+  l.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(l.getAttribute('href'));
+    if (target) scroller.scrollTo({ top: target.offsetTop - 16, behavior: 'instant' });
+  });
+});
+
+// Dashboard card smooth scroll
+document.querySelectorAll('.dash-card[href^="#"]').forEach(c => {
+  c.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(c.getAttribute('href'));
+    if (target) scroller.scrollTo({ top: target.offsetTop - 16, behavior: 'instant' });
+  });
+});
+
+// Scroll to top (dashboard) on page load
+scroller.scrollTop = 0;
+
+/* ── api-right 내 code-blk에 Copy 버튼 일괄 삽입 ── */
+document.querySelectorAll('.api-right .code-blk').forEach(function(blk) {
+  // 이미 Copy 버튼이 있는 경우 스킵 (엣지 대역 등 수동 추가분)
+  if (blk.previousElementSibling && blk.previousElementSibling.querySelector && blk.previousElementSibling.querySelector('button')) return;
+  var wrapper = document.createElement('div');
+  wrapper.style.position = 'relative';
+  blk.parentNode.insertBefore(wrapper, blk);
+  wrapper.appendChild(blk);
+  var btn = document.createElement('button');
+  btn.textContent = 'Copy';
+  btn.className = 'copy-btn';
+  btn.addEventListener('click', function() {
+    navigator.clipboard.writeText(blk.innerText).then(function() {
+      btn.textContent = 'Copied!';
+      btn.style.background = '#238636';
+      btn.style.borderColor = '#2ea043';
+      setTimeout(function() { btn.textContent = 'Copy'; btn.style.background = ''; btn.style.borderColor = ''; }, 1500);
+    });
+  });
+  wrapper.appendChild(btn);
+});
+
+</script>
+
+<!-- Lightbox overlay -->
+<div id="lightbox-overlay" onclick="closeLightbox()">
+  <span id="lightbox-close" onclick="closeLightbox()">&times;</span>
+  <img id="lightbox-img" src="" alt="확대 이미지">
+</div>
+
+<script>
+function openLightbox(imgEl) {
+  var overlay = document.getElementById('lightbox-overlay');
+  var lbImg = document.getElementById('lightbox-img');
+  lbImg.src = imgEl.src;
+  lbImg.alt = imgEl.alt || '확대 이미지';
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  document.getElementById('lightbox-overlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeLightbox();
+});
+</script>
+</body>
+</html>

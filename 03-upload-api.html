@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S-CDN 매뉴얼 V0.1</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --sidebar-w: 264px;
+  --grad-l: #0792CD;
+  --grad-r: #1F2CBE;
+  --accent: #00A9FF;
+  --orange: #FBAE40;
+  --border: #e4eaf2;
+  --text: #1a1a2e;
+  --text-sub: #4a5568;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:'Noto Sans KR',sans-serif;-webkit-font-smoothing:antialiased;}
+
+.app{display:flex;height:100vh;overflow:hidden;}
+
+.sidebar{
+  width:var(--sidebar-w);flex-shrink:0;
+  background:#0d1117;
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+  border-right:1px solid #21262d;
+}
+.sidebar::-webkit-scrollbar{width:4px;}
+.sidebar::-webkit-scrollbar-thumb{background:#30363d;border-radius:2px;}
+
+.sb-header{
+  padding:18px 16px 14px;
+  border-bottom:1px solid #21262d;
+  display:flex;align-items:center;gap:10px;
+  position:sticky;top:0;z-index:10;
+  background:#0d1117;
+}
+.sb-header img{height:24px;opacity:.9;}
+.sb-title{font-size:12.5px;font-weight:700;color:#e6edf3;line-height:1.3;}
+.sb-sub{font-size:10px;color:#58a6ff;margin-top:3px;background:rgba(56,139,253,.12);padding:2px 8px;border-radius:20px;display:inline-block;letter-spacing:.4px;}
+
+/* ── L1: top-level category (API, 포털, FTP …) ── */
+.sb-cat{border-bottom:1px solid #21262d;}
+.sb-cat:last-child{border-bottom:none;}
+.sb-cat-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 16px;cursor:pointer;
+  font-size:11px;font-weight:800;color:#8b949e;
+  letter-spacing:.6px;
+  transition:all .15s;user-select:none;
+}
+.sb-cat-header:hover{color:#e6edf3;background:rgba(255,255,255,.04);}
+.sb-cat-header.open{color:#e6edf3;}
+.sb-cat-header .sb-cat-icon{margin-right:8px;font-size:13px;opacity:.8;}
+.sb-cat-body{overflow:hidden;max-height:0;transition:max-height .35s ease;}
+.sb-cat-body.open{max-height:6000px;}
+.sb-chevron{transition:transform .22s;font-size:9px;opacity:.5;}
+.sb-cat-header.open .sb-chevron{transform:rotate(90deg);opacity:.8;}
+
+/* ── L2: sub-group inside category (Statistics, Purge …) ── */
+.sb-tree-group{border-bottom:none;}
+.sb-tree-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:7px 16px 7px 28px;cursor:pointer;
+  font-size:10px;font-weight:700;color:#6e7681;
+  letter-spacing:.9px;text-transform:uppercase;
+  transition:all .15s;user-select:none;
+}
+.sb-tree-header:hover{color:#c9d1d9;background:rgba(255,255,255,.04);}
+.sb-tree-header.open{color:#e6edf3;}
+.sb-tree-header.open .sb-chevron{transform:rotate(90deg);opacity:.8;}
+
+.sb-tree-body{overflow:hidden;max-height:0;transition:max-height .3s ease;}
+.sb-tree-body.open{max-height:1600px;}
+
+/* ── Links ── */
+.sb-link{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 16px 6px 36px;
+  font-size:12px;color:#8b949e;
+  text-decoration:none;
+  border-left:2px solid transparent;
+  transition:all .15s;cursor:pointer;
+}
+.sb-link:hover{color:#c9d1d9;background:rgba(255,255,255,.04);}
+.sb-link.active{color:#58a6ff;border-left-color:#58a6ff;background:rgba(56,139,253,.08);}
+.sb-link .method-dot{display:inline-block;width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.sb-link .method-dot.post{background:#3b82f6;}
+.sb-link .method-dot.get{background:#22c55e;}
+
+/* ── Placeholder page link (no sub-groups) ── */
+.sb-page-link{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 16px 7px 28px;
+  font-size:12px;color:#8b949e;
+  text-decoration:none;transition:all .15s;cursor:pointer;
+}
+.sb-page-link:hover{color:#c9d1d9;background:rgba(255,255,255,.04);}
+.sb-page-link.active{color:#58a6ff;}
+.sb-page-link .sb-badge{font-size:9px;color:#6e7681;background:#21262d;padding:1px 6px;border-radius:8px;margin-left:auto;}
+
+.sb-contact-link{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 16px;
+  font-size:10px;font-weight:700;color:#6e7681;
+  letter-spacing:.9px;text-transform:uppercase;
+  text-decoration:none;border-left:2px solid transparent;
+  border-top:1px solid #21262d;
+  transition:all .15s;cursor:pointer;
+}
+.sb-contact-link:hover{color:#c9d1d9;background:rgba(255,255,255,.04);}
+.sb-contact-link.active{color:#58a6ff;border-left-color:#58a6ff;}
+
+.main{flex:1;overflow-y:auto;background:#f0f2f5;}
+.main::-webkit-scrollbar{width:6px;}
+.main::-webkit-scrollbar-thumb{background:#c0c0c0;border-radius:3px;}
+
+.full-section{
+  background:#fff;
+  padding:52px 64px 60px;
+  border-bottom:2px solid #f0f2f5;
+  max-width:100%;
+}
+
+.api-section{
+  display:grid;
+  grid-template-columns:1fr 420px;
+  border-bottom:2px solid #f0f2f5;
+  background:#fff;
+}
+.api-left{
+  padding:48px 52px 60px;
+  border-right:1px solid #e8ecf2;
+  overflow:visible;
+}
+.api-right{
+  background:#1e1e2e;
+  padding:36px 24px 40px;
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow-y:auto;
+  align-self:start;
+}
+.api-right::-webkit-scrollbar{width:4px;}
+.api-right::-webkit-scrollbar-thumb{background:#30363d;border-radius:2px;}
+
+.method-row{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.method-badge{padding:4px 13px;border-radius:6px;font-size:12.5px;font-weight:700;font-family:'Fira Code',monospace;letter-spacing:.3px;}
+.method-badge.post{background:#dbeafe;color:#1d4ed8;}
+.method-badge.get{background:#dcfce7;color:#15803d;}
+.api-title{font-size:22px;font-weight:800;color:var(--text);}
+
+.endpoint-box{
+  background:#f8fafc;border:1px solid #e2e8f0;
+  border-radius:8px;padding:12px 18px;
+  font-family:'Fira Code',monospace;font-size:12px;
+  color:#374151;margin-bottom:8px;word-break:break-all;
+}
+.endpoint-note{font-size:11.5px;color:#6b7280;margin-bottom:22px;line-height:1.6;}
+
+.api-desc{font-size:13.5px;color:var(--text-sub);line-height:1.85;margin-bottom:26px;}
+
+.param-heading{
+  font-size:11px;font-weight:700;color:#6e7681;
+  letter-spacing:.8px;text-transform:uppercase;
+  margin:28px 0 12px;padding-bottom:7px;
+  border-bottom:1px solid #e4eaf2;
+}
+.param-heading:first-of-type{margin-top:0;}
+
+.param-tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+.param-tbl th{background:#f6f8fa;color:#57606a;font-weight:600;padding:9px 13px;text-align:left;border-bottom:2px solid #d0d7de;white-space:nowrap;}
+.param-tbl td{padding:9px 13px;border-bottom:1px solid #f0f2f5;color:#374151;vertical-align:top;line-height:1.6;}
+.param-tbl tr:last-child td{border-bottom:none;}
+.param-tbl tr:hover td{background:#fafbfc;}
+.pname{font-family:'Fira Code',monospace;font-size:11.5px;color:#cf222e;background:#fff5f5;padding:2px 7px;border-radius:4px;}
+.ptype{font-size:11px;color:#6e7681;font-style:italic;}
+.preq{display:inline-block;font-size:10px;font-weight:700;padding:1px 7px;border-radius:3px;}
+.preq.y{background:#fff0f0;color:#cf222e;}
+.preq.n{background:#f0f4ff;color:#0550ae;}
+
+.ib{background:#f0f9ff;border-left:3px solid #38bdf8;padding:11px 15px;border-radius:0 6px 6px 0;font-size:12px;color:#0c4a6e;margin:12px 0;line-height:1.7;}
+.ib.warn{background:#fffbeb;border-color:#f59e0b;color:#78350f;}
+.ib.ok{background:#f0fdf4;border-color:#22c55e;color:#14532d;}
+.ib strong{font-weight:700;}
+
+.rp-title{font-size:10.5px;font-weight:700;color:#6e7681;letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px;}
+.rp-tabs{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap;}
+.rp-tab{
+  padding:4px 13px;border-radius:5px;
+  font-size:11.5px;font-weight:600;cursor:pointer;
+  color:#8b949e;background:transparent;
+  border:1px solid #30363d;transition:all .15s;
+}
+.rp-tab:hover{color:#e6edf3;border-color:#58a6ff;}
+.rp-tab.active.xml{background:#1d4ed8;color:#fff;border-color:#1d4ed8;}
+.rp-tab.active.json{background:#16a34a;color:#fff;border-color:#16a34a;}
+.rp-tab.active.url{background:#9333ea;color:#fff;border-color:#9333ea;}
+.rp-pane{display:none;}
+.rp-pane.show{display:block;}
+
+.rp-sub{font-size:11px;font-weight:700;color:#8b949e;margin:14px 0 6px;display:flex;align-items:center;gap:8px;}
+.rp-sub::after{content:'';flex:1;height:1px;background:#30363d;}
+
+.code-blk{
+  background:#0d1117;border-radius:8px;
+  padding:14px 16px;
+  font-family:'Fira Code',monospace;font-size:.7rem;
+  line-height:1.72;color:#e6edf3;
+  overflow-x:hidden;white-space:pre-wrap;word-break:break-all;
+  margin-bottom:4px;
+}
+.kw{color:#ff7b72;} .str{color:#a5d6ff;} .num{color:#79c0ff;}
+.fn{color:#e3b341;} .cm{color:#6e7681;font-style:italic;}
+.tag-x{color:#7ee787;} .attr{color:#e3b341;}
+
+.copy-btn{
+  position:absolute;top:6px;right:6px;
+  background:#21262d;color:#c9d1d9;
+  border:1px solid #30363d;border-radius:5px;
+  padding:2px 10px;font-size:10px;
+  cursor:pointer;opacity:0;transition:opacity .15s;
+  z-index:2;font-family:'Fira Code',monospace;
+}
+.copy-btn:hover{background:#30363d;color:#fff;}
+div:has(> .code-blk):hover .copy-btn{opacity:1;}
+
+.fs-title{font-size:24px;font-weight:800;color:var(--text);margin-bottom:10px;}
+.fs-badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 12px;border-radius:20px;background:linear-gradient(135deg,var(--grad-l),var(--grad-r));color:#fff;margin-bottom:18px;letter-spacing:.5px;}
+.fs-desc{font-size:13.5px;color:var(--text-sub);line-height:1.85;margin-bottom:24px;}
+.fs-h2{font-size:16px;font-weight:700;color:var(--text);margin:30px 0 12px;padding-bottom:7px;border-bottom:2px solid #e8ecf2;}
+
+.feat-tbl{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:6px;}
+.feat-tbl th{background:linear-gradient(135deg,var(--grad-l),var(--grad-r));color:#fff;padding:10px 14px;text-align:left;font-weight:600;}
+.feat-tbl td{padding:10px 14px;border-bottom:1px solid #f0f2f5;color:#374151;vertical-align:top;line-height:1.6;}
+.feat-tbl tr:last-child td{border-bottom:none;}
+.feat-tbl tr:hover td{background:#fafbfc;}
+
+.env-tbl{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:6px;}
+.env-tbl th{background:#f6f8fa;color:#57606a;font-weight:600;padding:9px 14px;text-align:left;border-bottom:2px solid #d0d7de;white-space:nowrap;width:150px;}
+.env-tbl td{padding:9px 14px;border-bottom:1px solid #f0f2f5;color:#374151;line-height:1.6;}
+.env-tbl tr:last-child td{border-bottom:none;}
+
+.flow{display:flex;align-items:center;gap:8px;margin:20px 0;flex-wrap:wrap;}
+.flow-item{background:linear-gradient(135deg,#eef5ff,#f5f8ff);border:1px solid #d0dfef;border-radius:10px;padding:9px 18px;font-size:.88rem;font-weight:600;color:#1F2CBE;}
+.flow-arrow{color:#0792CD;font-size:18px;font-weight:700;}
+
+.err-tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+.err-tbl th{background:#f6f8fa;color:#57606a;font-weight:600;padding:8px 12px;text-align:left;border-bottom:2px solid #d0d7de;}
+.err-tbl td{padding:8px 12px;border-bottom:1px solid #f0f2f5;color:#374151;vertical-align:top;}
+.err-tbl tr:last-child td{border-bottom:none;}
+
+.tag-r{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;background:#fef2f2;color:#b91c1c;}
+.tag-b{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;background:#eff6ff;color:#1d4ed8;}
+.tag-g{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;background:#f0fdf4;color:#15803d;}
+
+code{font-family:'Fira Code',monospace;background:#f1f3f6;color:#cf222e;padding:2px 6px;border-radius:4px;font-size:.85em;}
+
+.section-anchor{display:block;height:0;}
+
+/* ── Info Grid / Card (가이드 콘텐츠용) ── */
+.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin:16px 0;}
+.info-card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:22px 24px;transition:all .2s;}
+.info-card:hover{border-color:var(--accent);box-shadow:0 4px 16px rgba(7,146,205,.08);}
+.info-card h4{font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #e8ecf2;}
+.info-card ul{margin:0;padding-left:18px;list-style:none;}
+.info-card ul li{position:relative;padding:5px 0 5px 14px;font-size:13px;color:var(--text-sub);line-height:1.7;}
+.info-card ul li::before{content:'•';position:absolute;left:0;color:var(--accent);font-weight:700;}
+
+/* ── Step Card ── */
+.step-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin:16px 0;}
+.step-card{background:#fff;border:1px solid #e4eaf2;border-radius:10px;padding:18px 22px;display:flex;gap:14px;align-items:flex-start;}
+.step-card .step-num{display:flex;align-items:center;justify-content:center;width:32px;height:32px;min-width:32px;border-radius:50%;background:linear-gradient(135deg,var(--grad-l),var(--grad-r));color:#fff;font-size:13px;font-weight:700;}
+.step-card .step-content{flex:1;}
+.step-card .step-content h4{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.step-card .step-content p{font-size:12.5px;color:var(--text-sub);line-height:1.6;margin:0;}
+
+/* ── Feature List ── */
+.feature-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin:14px 0;}
+.feature-item{background:#f8fafc;border-left:3px solid var(--accent);padding:12px 16px;border-radius:0 8px 8px 0;}
+.feature-item strong{font-size:12.5px;color:var(--text);display:block;margin-bottom:4px;}
+.feature-item span{font-size:12px;color:var(--text-sub);line-height:1.6;}
+
+.dom-label{display:inline-block;font-size:11px;font-weight:700;padding:4px 14px 4px 11px;border-radius:0 6px 6px 0;margin:20px 0 8px;letter-spacing:.2px;}
+.dom-label.single{background:#eff6ff;color:#1d4ed8;border-left:3px solid #1d4ed8;}
+.dom-label.total{background:#fdf4ff;color:#7e22ce;border-left:3px solid #7e22ce;}
+.dom-label:first-child{margin-top:0;}
+
+.rp-domain{display:inline-block;font-size:10px;font-weight:700;padding:3px 10px;border-radius:4px;margin:4px 0 6px;}
+.rp-domain.single{background:rgba(59,130,246,.18);color:#93c5fd;}
+.rp-domain.total{background:rgba(168,85,247,.18);color:#d8b4fe;}
+
+.api-group-header{
+  background:#fff;
+  border-bottom:1px solid #e8ecf2;
+  padding:12px 52px;
+  font-size:11px;font-weight:700;color:#6e7681;
+  letter-spacing:.9px;text-transform:uppercase;
+  display:flex;align-items:center;gap:8px;
+}
+.api-group-header::before{
+  content:'';width:3px;height:16px;border-radius:2px;
+  background:linear-gradient(var(--grad-l),var(--grad-r));
+}
+
+@media(max-width:1200px){
+  .api-section{grid-template-columns:1fr;}
+  .api-right{position:static;height:auto;}
+}
+
+
+/* ── Dashboard Landing ── */
+.dashboard{
+  padding:60px 48px 80px;
+  max-width:1100px;
+  margin:0 auto;
+}
+.dash-header{
+  text-align:center;
+  margin-bottom:48px;
+}
+.dash-header h1{
+  font-size:28px;font-weight:800;color:var(--text);
+  margin-bottom:8px;letter-spacing:-.5px;
+}
+.dash-header p{
+  font-size:15px;color:var(--text-sub);line-height:1.6;
+}
+.dash-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  gap:20px;
+}
+.dash-card{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:28px 24px 24px;
+  text-align:center;
+  cursor:pointer;
+  transition:all .2s ease;
+  text-decoration:none;
+  color:inherit;
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+}
+.dash-card:hover{
+  border-color:var(--accent);
+  box-shadow:0 4px 20px rgba(0,120,255,.1);
+  transform:translateY(-3px);
+}
+.dash-icon{
+  width:64px;height:64px;border-radius:16px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;
+  flex-shrink:0;
+}
+.dash-icon.stats{background:linear-gradient(135deg,#e8f4fd,#d0e8ff);color:#1a73e8;}
+.dash-icon.purge{background:linear-gradient(135deg,#fef3e2,#fde5c0);color:#e8590c;}
+.dash-icon.upload{background:linear-gradient(135deg,#e6f9f0,#c6f0da);color:#059669;}
+.dash-icon.ftp{background:linear-gradient(135deg,#f3e8ff,#e4d0ff);color:#7c3aed;}
+.dash-icon.portal{background:linear-gradient(135deg,#e8eeff,#d0dcff);color:#4338ca;}
+.dash-icon.cache{background:linear-gradient(135deg,#fef2f2,#fde0e0);color:#dc2626;}
+.dash-icon.checklist{background:linear-gradient(135deg,#f0fdf4,#d1fae5);color:#15803d;}
+.dash-card-title{font-size:15px;font-weight:700;color:var(--text);}
+.dash-card-desc{font-size:12.5px;color:var(--text-sub);line-height:1.5;}
+.dash-card .dash-badge{
+  font-size:10px;color:#94a3b8;background:#f1f5f9;
+  padding:2px 8px;border-radius:10px;margin-top:2px;
+}
+
+/* ── Lightbox / Image Zoom ── */
+.zoomable-img {
+  cursor: zoom-in;
+  transition: opacity 0.2s;
+}
+.zoomable-img:hover {
+  opacity: 0.85;
+}
+#lightbox-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+  cursor: zoom-out;
+}
+#lightbox-overlay.active {
+  display: flex;
+}
+#lightbox-overlay img {
+  max-width: 92vw;
+  max-height: 92vh;
+  border-radius: 8px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  animation: lbFadeIn 0.2s ease;
+}
+@keyframes lbFadeIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+#lightbox-close {
+  position: fixed;
+  top: 18px; right: 24px;
+  color: #fff;
+  font-size: 32px;
+  cursor: pointer;
+  z-index: 10000;
+  line-height: 1;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+/* ── 사이드바 검색 ── */
+.sb-search{padding:10px 12px;border-bottom:1px solid #21262d;position:relative;}
+.sb-search-icon{position:absolute;left:20px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.6;pointer-events:none;}
+.sb-search input{
+  width:100%;box-sizing:border-box;padding:7px 10px 7px 32px;
+  background:#161b22;border:1px solid #30363d;border-radius:6px;
+  color:#c9d1d9;font-size:13px;outline:none;transition:border .2s;
+}
+.sb-search input::placeholder{color:#6e7681;}
+.sb-search input:focus{border-color:#58a6ff;}
+.sb-search-results{
+  display:none;position:absolute;left:12px;right:12px;top:calc(100% - 2px);
+  background:#1c2128;border:1px solid #30363d;border-radius:8px;
+  max-height:320px;overflow-y:auto;z-index:900;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);
+}
+.sb-search-results.show{display:block;}
+.sb-search-item{padding:8px 12px;cursor:pointer;border-bottom:1px solid #21262d;}
+.sb-search-item:last-child{border-bottom:none;}
+.sb-search-item:hover{background:rgba(56,139,253,.15);}
+.sri-title{font-size:13px;color:#e6edf3;font-weight:500;}
+.sri-group{font-size:11px;color:#58a6ff;margin-top:2px;}
+
+
+/* ── 다운로드 카드 ── */
+.dl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:24px;}
+.dl-card{
+  display:flex;align-items:center;gap:16px;padding:20px 24px;
+  background:#fff;border:1px solid #d0d7de;border-radius:12px;
+  text-decoration:none;color:#1f2328;
+  transition:border .2s,box-shadow .2s;
+}
+.dl-card:hover{border-color:#0969da;box-shadow:0 2px 12px rgba(9,105,218,.12);}
+.dl-icon{
+  flex-shrink:0;width:48px;height:48px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;font-size:22px;
+  background:linear-gradient(135deg,#eff6ff,#dbeafe);
+}
+.dl-info{flex:1;min-width:0;}
+.dl-name{font-size:14px;font-weight:600;color:#1f2328;}
+.dl-desc{font-size:12px;color:#6e7681;margin-top:4px;line-height:1.5;}
+.dl-badge{
+  flex-shrink:0;padding:4px 12px;border-radius:6px;font-size:11px;font-weight:600;
+  background:#eff6ff;color:#0969da;white-space:nowrap;
+}
+.dl-badge.xlsx{background:#ecfdf5;color:#15803d;}
+.dl-badge.zip{background:#fff7ed;color:#c2410c;}
+/* ── 대시보드 검색 ── */
+.dash-search{
+  max-width:520px;margin:0 auto 32px;position:relative;
+}
+.dash-search-icon{position:absolute;left:18px;top:50%;transform:translateY(-50%);font-size:15px;opacity:.5;pointer-events:none;}
+.dash-search input{
+  width:100%;box-sizing:border-box;padding:12px 16px 12px 42px;
+  background:#fff;border:1.5px solid #d0d7de;border-radius:12px;
+  font-size:15px;color:#1f2328;outline:none;
+  box-shadow:0 1px 3px rgba(0,0,0,.06);transition:border .2s,box-shadow .2s;
+}
+.dash-search input::placeholder{color:#8b949e;}
+.dash-search input:focus{border-color:#0969da;box-shadow:0 0 0 3px rgba(9,105,218,.15);}
+.dash-search-results{
+  display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);
+  background:#fff;border:1px solid #d0d7de;border-radius:12px;
+  max-height:360px;overflow-y:auto;z-index:900;
+  box-shadow:0 8px 24px rgba(0,0,0,.12);
+}
+.dash-search-results.show{display:block;}
+.dash-search-item{padding:10px 16px;cursor:pointer;border-bottom:1px solid #f0f0f0;}
+.dash-search-item:last-child{border-bottom:none;}
+.dash-search-item:hover{background:#f8fafc;}
+.dsi-title{font-size:14px;color:#1f2328;font-weight:500;}
+.dsi-group{font-size:12px;color:#0969da;margin-top:2px;}
+</style>
+
+<body>
+<div class="app">
+
+  <!-- ── 사이드바 ── -->
+  <nav class="sidebar">
+    <div class="sb-header" style="cursor:default;">
+      <img src="https://www.speedykorea.com/images/logo/speedy-logo-white.svg" alt="Speedy" onerror="this.style.display='none'">
+      <div>
+        <div class="sb-title">S-CDN 매뉴얼</div>
+        <span class="sb-sub">Upload API</span>
+      </div>
+    </div>
+      <!-- Upload API -->
+      <div class="sb-tree-group">
+        <div class="sb-tree-header" onclick="toggleGroup(this)">
+          <span>Upload API</span><span class="sb-chevron">▶</span>
+        </div>
+        <div class="sb-tree-body">
+          <a class="sb-link" href="#upload-overview">시스템 개요</a>
+          <a class="sb-link" href="#upload-flow"><span class="method-dot post"></span>POST &nbsp;Upload (flow.js)</a>
+          <a class="sb-link" href="#upload-listup"><span class="method-dot post"></span>POST &nbsp;Listup</a>
+          <a class="sb-link" href="#upload-delete"><span class="method-dot post"></span>POST &nbsp;Delete</a>
+          <a class="sb-link" href="#upload-unzip"><span class="method-dot post"></span>POST &nbsp;UnZIP</a>
+          <a class="sb-link" href="#upload-copy"><span class="method-dot post"></span>POST &nbsp;Copy / Move</a>
+          <a class="sb-link" href="#upload-mkdir"><span class="method-dot post"></span>POST &nbsp;Mkdir / Rename</a>
+          <a class="sb-link" href="#upload-download"><span class="method-dot get"></span>GET &nbsp;&nbsp;Download</a>
+          <a class="sb-link" href="#upload-put"><span class="method-dot" style="background:#059669;"></span>PUT &nbsp;&nbsp;Upload (PUT)</a>
+          <a class="sb-link" href="#upload-errors">에러 코드</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  </nav>
+
+  <!-- ── 본문 ── -->
+  <main class="main" id="mainScroll">
+<span id="upload-overview" class="section-anchor"></span>
+<section class="full-section">
+  <div class="fs-badge">UPLOAD API</div>
+  <h1 class="fs-title">시스템 개요</h1>
+  <p class="fs-desc">Upload API는 파일을 CDN Storage에 upload, 조회, 삭제하는 기능을 지원합니다. Flow.js 기반의 청크 업로드와 다양한 파일 관리 기능을 REST API로 제공합니다.</p>
+
+  <h2 class="fs-h2">기본 정보</h2>
+  <table class="env-tbl">
+    <tr><th>서버</th><td><code>fileupload.cdn.cloudn.co.kr</code></td></tr>
+    <tr><th>URL 형식</th><td><code>http://fileupload.cdn.cloudn.co.kr/[Method Name]</code></td></tr>
+    <tr><th>지원 프로토콜</th><td>REST (HTTP POST / GET)</td></tr>
+    <tr><th>인증 방식</th><td>userid + passwd <strong>또는</strong> userid + auth_token (택1)</td></tr>
+  </table>
+
+  <h2 class="fs-h2">공통 인증 파라미터 (모든 API 공통)</h2>
+  <table class="feat-tbl">
+    <tr><th>Parameter</th><th>Required</th><th>Description</th><th>비고</th></tr>
+    <tr><td><strong>userid</strong></td><td>Y (필수)</td><td>FTP user id</td><td>ex) test</td></tr>
+    <tr><td><strong>passwd</strong></td><td>택1 필수</td><td>FTP user id password</td><td rowspan="2">passwd 또는 auth_token 중 1개 필수 선택</td></tr>
+    <tr><td><strong>auth_token</strong></td><td>택1 필수</td><td>FTP user id auth token (passwd 대신 사용 가능)</td></tr>
+  </table>
+
+  <h2 class="fs-h2">API 목록</h2>
+  <table class="feat-tbl">
+    <tr><th>Method Name</th><th>HTTP Method</th><th>설명</th></tr>
+    <tr><td><strong>upload</strong></td><td><span class="tag-b">POST</span></td><td>파일을 CDN Storage에 Upload (Flow.js 청크 방식)</td></tr>
+    <tr><td><strong>listup</strong></td><td><span class="tag-b">POST</span></td><td>CDN Storage에서 주어진 경로에 대한 파일/디렉토리 조회</td></tr>
+    <tr><td><strong>delete</strong></td><td><span class="tag-b">POST</span></td><td>요청된 디렉토리/파일을 CDN Storage에서 삭제</td></tr>
+    <tr><td><strong>extractzip</strong></td><td><span class="tag-b">POST</span></td><td>Upload된 zip 파일을 압축 해제하여 같은 Directory에 저장</td></tr>
+    <tr><td><strong>copy</strong></td><td><span class="tag-b">POST</span></td><td>CDN Storage 상의 content를 복사</td></tr>
+    <tr><td><strong>move</strong></td><td><span class="tag-b">POST</span></td><td>CDN Storage 상의 content를 이동</td></tr>
+    <tr><td><strong>mkdir</strong></td><td><span class="tag-b">POST</span></td><td>CDN Storage 상에서 directory 생성</td></tr>
+    <tr><td><strong>download</strong></td><td><span class="tag-g">GET</span></td><td>CDN Storage 상의 content를 다운로드</td></tr>
+    <tr><td><strong>uploadput</strong></td><td><span class="tag-b">PUT</span></td><td>CDN Storage에 content upload (PUT method)</td></tr>
+    <tr><td><strong>rename</strong></td><td><span class="tag-b">POST</span></td><td>CDN Storage 상의 파일/디렉토리 rename</td></tr>
+  </table>
+</section>
+
+<span id="upload-flow" class="section-anchor"></span>
+<section class="api-section">
+  <div class="api-left">
+    <div class="method-row">
+      <span class="method-badge post">POST</span>
+      <h2 class="api-title">Upload (flow.js)</h2>
+    </div>
+    <div class="endpoint-box">http://fileupload.cdn.cloudn.co.kr/upload</div>
+    <div class="endpoint-note">※ Upload API는 Flow.js(https://github.com/flowjs/flow.js) open source를 이용. Client에서 Speedy에서 수정한 flow.js 파일을 이용하여 구현하여야 합니다.</div>
+    <p class="api-desc">Client는 Upload API 서버에 contents를 Upload하기 위해 Upload-Check를 요청한 후 chunk 단위로 multipart upload를 시작합니다.</p>
+
+    
+    <div class="param-heading" style="margin-top:0;">공통 인증 파라미터</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Required</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">userid</span></td><td><span class="preq y">Y</span></td><td>FTP user id</td><td>ex) test</td></tr>
+      <tr><td><span class="pname">passwd</span></td><td><span class="preq n">택1</span></td><td>FTP user id password</td><td rowspan="2">passwd 또는 auth_token 중 1개 필수<br>ex) 1234</td></tr>
+      <tr><td><span class="pname">auth_token</span></td><td><span class="preq n">택1</span></td><td>FTP user id auth token (passwd 대신 사용)</td><td>ex) abc6e615-6f36-419a-b961-3a0df78f8a96</td></tr>
+    </table>
+
+
+    <div class="param-heading">추가 파라미터</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Required</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">subpath</span></td><td><span class="preq y">Y</span></td><td>Upload 할 FTP에서의 subpath</td><td>ex) testsubpath1/23/06/05</td></tr>
+      <tr><td><span class="pname">callback_url</span></td><td><span class="preq n">선택</span></td><td>Upload 완료 후 호출할 callback url</td><td>ex) http://test.co.kr/uploadcompleted</td></tr>
+    </table>
+
+    <div class="param-heading">Upload 완료 시 Callback 파라미터</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">request_id</span></td><td>해당 파일의 upload request id</td><td>ex) 42a67530-3752-11e6-bfdd-71b7f85d5fc7</td></tr>
+      <tr><td><span class="pname">service</span></td><td>Upload Service ID (고정)</td><td>ex) NIM10001</td></tr>
+      <tr><td><span class="pname">title</span></td><td>Upload file Name</td><td>ex) 1.mp4</td></tr>
+    </table>
+    <div class="ib">💡 Upload 완료 후 callback_url을 HTTP POST method로 호출하여 완료된 파일 정보를 JSON 형식으로 전달합니다.</div>
+  </div>
+  <div class="api-right">
+    <div class="rp-title">Request Example (JSON Body)</div>
+    <div class="rp-sub">Upload 요청</div>
+    <div class="code-blk">{
+  "userid": "test",
+  "passwd": "1234",
+  "subpath": "testsubpath1/23/06/05",
+  "callback_url": "http://test.co.kr/uploadcompleted"
+}
+
+// auth_token 사용 시
+{
+  "userid": "test",
+  "auth_token": "abc6e615-6f36-419a-b961-3a0df78f8a96",
+  "subpath": "testsubpath1/23/06/05",
+  "callback_url": "http://test.co.kr/uploadcompleted"
+}</div>
+    <div class="rp-sub">Callback 수신 예시</div>
+    <div class="code-blk">{
+  "request_id": "42a67530-3752-11e6-bfdd-71b7f85d5fc7",
+  "service": "NIM10001",
+  "title": "1.mp4"
+}</div>
+  </div>
+</section>
+
+<span id="upload-listup" class="section-anchor"></span>
+<section class="api-section">
+  <div class="api-left">
+    <div class="method-row">
+      <span class="method-badge post">POST</span>
+      <h2 class="api-title">Listup — CDN Storage 조회</h2>
+    </div>
+    <div class="endpoint-box">http://fileupload.cdn.cloudn.co.kr/listup</div>
+    <div class="endpoint-note">※ Content-Type: Application/json 헤더 필수</div>
+    <p class="api-desc">CDN Storage에 존재하는 파일/디렉토리 정보를 조회합니다. Directory인 경우 하위 모든 파일/디렉토리 정보를 제공합니다.</p>
+
+    
+    <div class="param-heading" style="margin-top:0;">공통 인증 파라미터</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Required</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">userid</span></td><td><span class="preq y">Y</span></td><td>FTP user id</td><td>ex) test</td></tr>
+      <tr><td><span class="pname">passwd</span></td><td><span class="preq n">택1</span></td><td>FTP user id password</td><td rowspan="2">passwd 또는 auth_token 중 1개 필수<br>ex) 1234</td></tr>
+      <tr><td><span class="pname">auth_token</span></td><td><span class="preq n">택1</span></td><td>FTP user id auth token (passwd 대신 사용)</td><td>ex) abc6e615-6f36-419a-b961-3a0df78f8a96</td></tr>
+    </table>
+
+
+    <div class="param-heading">추가 파라미터</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Required</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">path</span></td><td><span class="preq y">Y</span></td><td>조회할 FTP에서의 path</td><td>ex) testsubpath1/23/06/05<br>또는 testsubpath55/15/07/23/2.mp4</td></tr>
+    </table>
+
+    <div class="param-heading">응답 파라미터</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">result_code</span></td><td>Result code</td><td>ex) 200, 401, 404, 500</td></tr>
+      <tr><td><span class="pname">result_msg</span></td><td>Result message</td><td>ex) success, not found</td></tr>
+      <tr><td><span class="pname">path</span></td><td>조회 대상이 된 path</td><td>ex) testsubpath1/23/06/05</td></tr>
+      <tr><td><span class="pname">list[].name</span></td><td>File 또는 Directory name</td><td>ex) 1.mp4</td></tr>
+      <tr><td><span class="pname">list[].type</span></td><td>Directory/File Type</td><td>F: file, D: directory</td></tr>
+      <tr><td><span class="pname">list[].last-modified</span></td><td>가장 최근 수정(생성) Date</td><td>형식: yyyyMMddHHmmss<br>ex) 20230602153824</td></tr>
+      <tr><td><span class="pname">list[].size</span></td><td>File Size</td><td>ex) 110011072</td></tr>
+    </table>
+  </div>
+  <div class="api-right">
+    <div class="rp-title">Request Example</div>
+    <div class="rp-sub">JSON Body</div>
+    <div class="code-blk">{
+  "userid": "test",
+  "passwd": "1234",
+  "path": "testsubpath1/23/06/05"
+}</div>
+    <div class="rp-sub">Response (Directory 조회)</div>
+    <div class="code-blk">{
+  "result_code": "200",
+  "result_msg": "success",
+  "path": "testsubpath1/23/06/05",
+  "list": [
+    {
+      "name": "1.mp4",
+      "type": "F",
+      "last-modified": "20230602153824",
+      "size": "110011072"
+    },
+    {
+      "name": "2.mp4",
+      "type": "F",
+      "last-modified": "20230610231219",
+      "size": "265938726"
+    },
+    {
+      "name": "12",
+      "type": "D",
+      "last-modified": "20230617101135",
+      "size": "4096"
+    }
+  ]
+}</div>
+  </div>
+</section>
+
+<span id="upload-delete" class="section-anchor"></span>
+<section class="api-section">
+  <div class="api-left">
+    <div class="method-row">
+      <span class="method-badge post">POST</span>
+      <h2 class="api-title">Delete — 경로 삭제</h2>
+    </div>
+    <div class="endpoint-box">http://fileupload.cdn.cloudn.co.kr/delete</div>
+    <div class="endpoint-note">※ Content-Type: Application/json 헤더 필수</div>
+    <p class="api-desc">CDN Storage에 존재하는 파일/디렉토리를 삭제합니다. Directory인 경우 하위 모든 파일/디렉토리를 삭제합니다. ⚠️ 삭제는 매우 위험하니 신중하게 처리해야 합니다.</p>
+
+    
+    <div class="param-heading" style="margin-top:0;">공통 인증 파라미터</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Required</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">userid</span></td><td><span class="preq y">Y</span></td><td>FTP user id</td><td>ex) test</td></tr>
+      <tr><td><span class="pname">passwd</span></td><td><span class="preq n">택1</span></td><td>FTP user id password</td><td rowspan="2">passwd 또는 auth_token 중 1개 필수<br>ex) 1234</td></tr>
+      <tr><td><span class="pname">auth_token</span></td><td><span class="preq n">택1</span></td><td>FTP user id auth token (passwd 대신 사용)</td><td>ex) abc6e615-6f36-419a-b961-3a0df78f8a96</td></tr>
+    </table>
+
+
+    <div class="param-heading">추가 파라미터</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Required</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">path</span></td><td><span class="preq y">Y</span></td><td>삭제할 FTP에서의 path</td><td>ex) testsubpath1/23/06/05<br>또는 testsubpath55/15/07/23/2.mp4</td></tr>
+    </table>
+    <div class="ib warn">⚠️ Directory 삭제 시 하위 모든 파일과 디렉토리가 함께 삭제됩니다. 삭제된 파일은 복구가 불가능합니다.</div>
+
+    <div class="param-heading">응답 파라미터</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">result_code</span></td><td>Result code</td><td>ex) 200, 401, 404, 500</td></tr>
+      <tr><td><span class="pname">result_msg</span></td><td>Result message</td><td>ex) success, not found</td></tr>
+      <tr><td><span class="pname">path</span></td><td>삭제 대상이 된 path</td><td></td></tr>
+    </table>
+  </div>
+  <div class="api-right">
+    <div class="rp-title">Request Example</div>
+    <div class="rp-sub">JSON Body</div>
+    <div class="code-blk">// File 삭제
+{
+  "userid": "test",
+  "passwd": "1234",
+  "path": "testsubpath1/23/06/05/1.mp4"
+}
+
+// Directory 삭제
+{
+  "userid": "test",
+  "auth_token": "abc6e615-6f36-419a-b961-3a0df78f8a96",
+  "path": "testsubpath1/23/06/05"
+}</div>
+    <div class="rp-sub">Response</div>
+    <div class="code-blk">{
+  "result_code": "200",
+  "result_msg": "success",
+  "path": "testsubpath1/23/06/05/1.mp4"
+}</div>
+  </div>
+</section>
+
+<span id="upload-unzip" class="section-anchor"></span>
+<section class="api-section">
+  <div class="api-left">
+    <div class="method-row">
+      <span class="method-badge post">POST</span>
+      <h2 class="api-title">UnZIP — 압축 해제</h2>
+    </div>
+    <div class="endpoint-box">http://fileupload.cdn.cloudn.co.kr/extractzip</div>
+    <div class="endpoint-note">※ Content-Type: Application/json 헤더 필수. 한 번에 하나의 zip 파일만 압축 해제합니다.</div>
+    <p class="api-desc">Upload된 *.zip 파일의 압축을 풀어 해당 zip 파일과 같은 경로상에 위치하게 합니다.</p>
+
+    
+    <div class="param-heading" style="margin-top:0;">공통 인증 파라미터</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Required</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">userid</span></td><td><span class="preq y">Y</span></td><td>FTP user id</td><td>ex) test</td></tr>
+      <tr><td><span class="pname">passwd</span></td><td><span class="preq n">택1</span></td><td>FTP user id password</td><td rowspan="2">passwd 또는 auth_token 중 1개 필수<br>ex) 1234</td></tr>
+      <tr><td><span class="pname">auth_token</span></td><td><span class="preq n">택1</span></td><td>FTP user id auth token (passwd 대신 사용)</td><td>ex) abc6e615-6f36-419a-b961-3a0df78f8a96</td></tr>
+    </table>
+
+
+    <div class="param-heading">추가 파라미터</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Required</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">path</span></td><td><span class="preq y">Y</span></td><td>UnZIP할 FTP에서의 파일 경로</td><td>ex) testsubpath1/23/06/05.zip</td></tr>
+    </table>
+
+    <div class="param-heading">응답 파라미터</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">Result_code</span></td><td>Result code</td><td>ex) 200, 400, 401, 500</td></tr>
+      <tr><td><span class="pname">Result_msg</span></td><td>Result message</td><td>ex) unzip success, zip file path is not set, invalid_auth_info, error in unzip content</td></tr>
+      <tr><td><span class="pname">Path</span></td><td>UnZIP 대상이 된 path</td><td>ex) testsubpath1/23/06/05.zip</td></tr>
+    </table>
+  </div>
+  <div class="api-right">
+    <div class="rp-title">Request Example</div>
+    <div class="rp-sub">JSON Body</div>
+    <div class="code-blk">{
+  "userid": "test",
+  "passwd": "1234",
+  "path": "testsubpath1/23/06/05.zip"
+}
+
+// auth_token 사용 시
+{
+  "userid": "test",
+  "auth_token": "abc6e615-6f36-419a-b961-3a0df78f8a96",
+  "path": "testsubpath1/23/06/05.zip"
+}</div>
+    <div class="rp-sub">Response</div>
+    <div class="code-blk">{
+  "result_code": "200",
+  "result_msg": "unzip success",
+  "path": "testsubpath1/23/06/05.zip"
+}</div>
+  </div>
+</section>
+
+<span id="upload-copy" class="section-anchor"></span>
+<section class="api-section">
+  <div class="api-left">
+    <div class="method-row">
+      <span class="method-badge post">POST</span>
+      <h2 class="api-title">Copy / Move</h2>
+    </div>
+
+    <div class="param-heading" style="margin-top:0;">Copy — 파일/디렉토리 복사</div>
+    <div class="endpoint-box" style="margin-bottom:8px;">http://fileupload.cdn.cloudn.co.kr/copy</div>
+    <div class="endpoint-note" style="margin-bottom:18px;">※ Content-Type: Application/json 헤더 필수. 한 번에 하나의 file 혹은 directory만 복사합니다.</div>
+
+    <div class="param-heading">Move — 파일/디렉토리 이동</div>
+    <div class="endpoint-box" style="margin-bottom:8px;">http://fileupload.cdn.cloudn.co.kr/move</div>
+    <div class="endpoint-note" style="margin-bottom:18px;">※ Content-Type: Application/json 헤더 필수. 한 번에 하나의 file 혹은 directory만 이동합니다.</div>
+
+    
+    <div class="param-heading" style="margin-top:0;">공통 인증 파라미터</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Required</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">userid</span></td><td><span class="preq y">Y</span></td><td>FTP user id</td><td>ex) test</td></tr>
+      <tr><td><span class="pname">passwd</span></td><td><span class="preq n">택1</span></td><td>FTP user id password</td><td rowspan="2">passwd 또는 auth_token 중 1개 필수<br>ex) 1234</td></tr>
+      <tr><td><span class="pname">auth_token</span></td><td><span class="preq n">택1</span></td><td>FTP user id auth token (passwd 대신 사용)</td><td>ex) abc6e615-6f36-419a-b961-3a0df78f8a96</td></tr>
+    </table>
+
+
+    <div class="param-heading">추가 파라미터 (Copy / Move 공통)</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Required</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">src</span></td><td><span class="preq y">Y</span></td><td>복사/이동할 원본 file 혹은 directory list</td><td>ex) ["testsubpath1/23/06/05.txt", "testsubpath1/23/06"]</td></tr>
+      <tr><td><span class="pname">dest</span></td><td><span class="preq y">Y</span></td><td>복사/이동할 목적지 경로</td><td>ex) destdir/path/directory</td></tr>
+    </table>
+
+    <div class="param-heading">응답 파라미터 (Copy / Move 공통)</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">Result_code</span></td><td>Result code</td><td>ex) 200, 400, 401, 500</td></tr>
+      <tr><td><span class="pname">Result_msg</span></td><td>Result message</td><td>Copy: copy success, error in copying content, invalid_auth_info, source or destination is not set<br>Move: move success, error in moving content, invalid_auth_info, source or destination is not set</td></tr>
+      <tr><td><span class="pname">src</span></td><td>원본 file 혹은 directory</td><td></td></tr>
+      <tr><td><span class="pname">dest</span></td><td>목적지 경로</td><td></td></tr>
+    </table>
+  </div>
+  <div class="api-right">
+    <div class="rp-title">Copy Request Example</div>
+    <div class="rp-sub">JSON Body</div>
+    <div class="code-blk">{
+  "userid": "test",
+  "passwd": "1234",
+  "src": [
+    "testsubpath1/23/06/05.txt",
+    "testsubpath1/23/06"
+  ],
+  "dest": "destdir/path/directory"
+}</div>
+    <div class="rp-sub">Copy Response</div>
+    <div class="code-blk">{
+  "result_code": "200",
+  "result_msg": "copy success",
+  "src": [
+    "testsubpath1/23/06/05.txt",
+    "testsubpath1/23/06"
+  ],
+  "dest": "destdir/path/directory"
+}</div>
+    <div class="rp-sub" style="margin-top:12px;">Move Request</div>
+    <div class="code-blk">{
+  "userid": "test",
+  "passwd": "1234",
+  "src": [
+    "testsubpath1/23/06/05.txt",
+    "testsubpath1/23/06"
+  ],
+  "dest": "destdir/path/directory"
+}</div>
+    <div class="rp-sub" style="margin-top:12px;">Move Response</div>
+    <div class="code-blk">{
+  "result_code": "200",
+  "result_msg": "move success",
+  "src": ["testsubpath1/23/06/05.txt"],
+  "dest": "destdir/path/directory"
+}</div>
+  </div>
+</section>
+
+<span id="upload-mkdir" class="section-anchor"></span>
+<section class="api-section">
+  <div class="api-left">
+    <div class="method-row">
+      <span class="method-badge post">POST</span>
+      <h2 class="api-title">Mkdir / Rename</h2>
+    </div>
+
+    <div class="param-heading" style="margin-top:0;">Mkdir — 디렉토리 생성</div>
+    <div class="endpoint-box" style="margin-bottom:8px;">http://fileupload.cdn.cloudn.co.kr/mkdir</div>
+    <div class="endpoint-note" style="margin-bottom:18px;">※ Content-Type: Application/json 헤더 필수. 한 번에 하나의 directory만 생성. 중간 directory가 없으면 모두 생성합니다.</div>
+
+    <div class="param-heading">Rename — 파일/디렉토리 이름 변경</div>
+    <div class="endpoint-box" style="margin-bottom:8px;">http://fileupload.cdn.cloudn.co.kr/rename</div>
+    <div class="endpoint-note" style="margin-bottom:18px;">※ Content-Type: Application/json 헤더 필수. 한 번에 하나의 file 혹은 directory만 rename합니다.</div>
+
+    
+    <div class="param-heading" style="margin-top:0;">공통 인증 파라미터</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Required</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">userid</span></td><td><span class="preq y">Y</span></td><td>FTP user id</td><td>ex) test</td></tr>
+      <tr><td><span class="pname">passwd</span></td><td><span class="preq n">택1</span></td><td>FTP user id password</td><td rowspan="2">passwd 또는 auth_token 중 1개 필수<br>ex) 1234</td></tr>
+      <tr><td><span class="pname">auth_token</span></td><td><span class="preq n">택1</span></td><td>FTP user id auth token (passwd 대신 사용)</td><td>ex) abc6e615-6f36-419a-b961-3a0df78f8a96</td></tr>
+    </table>
+
+
+    <div class="param-heading">Mkdir 추가 파라미터</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Required</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">path</span></td><td><span class="preq y">Y</span></td><td>생성해야 할 directory 경로</td><td>ex) testsubpath1/23/06</td></tr>
+    </table>
+
+    <div class="param-heading">Mkdir 응답</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">Result_code</span></td><td>Result code</td><td>ex) 200, 400, 401, 500</td></tr>
+      <tr><td><span class="pname">Result_msg</span></td><td>Result message</td><td>ex) success, invalid_auth_info</td></tr>
+      <tr><td><span class="pname">path</span></td><td>생성된 directory 경로</td><td>ex) testsubpath1/23/06</td></tr>
+    </table>
+
+    <div class="param-heading">Rename 추가 파라미터</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Required</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">src</span></td><td><span class="preq y">Y</span></td><td>rename할 원본 file 혹은 directory</td><td>ex) "testsubpath1/23/06/05.txt"</td></tr>
+      <tr><td><span class="pname">dest</span></td><td><span class="preq y">Y</span></td><td>rename할 목적지 경로</td><td>ex) destdir/path/directory/dest</td></tr>
+    </table>
+
+    <div class="param-heading">Rename 응답</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">Result_code</span></td><td>Result code</td><td>ex) 200, 400, 401, 500</td></tr>
+      <tr><td><span class="pname">Result_msg</span></td><td>Result message</td><td>ex) move success, error in moving content, invalid_auth_info, source or destination is not set</td></tr>
+      <tr><td><span class="pname">src</span></td><td>rename 원본 file 혹은 directory</td><td></td></tr>
+      <tr><td><span class="pname">dest</span></td><td>rename 목적지 경로</td><td></td></tr>
+    </table>
+  </div>
+  <div class="api-right">
+    <div class="rp-title">Mkdir Example</div>
+    <div class="rp-sub">JSON Body</div>
+    <div class="code-blk">{
+  "userid": "test",
+  "passwd": "1234",
+  "path": "testsubpath1/23/06"
+}</div>
+    <div class="rp-sub">Mkdir Response</div>
+    <div class="code-blk">{
+  "result_code": "200",
+  "result_msg": "mkdir success",
+  "path": "testsubpath1/23/06"
+}</div>
+    <div class="rp-sub" style="margin-top:12px;">Rename Request</div>
+    <div class="code-blk">{
+  "userid": "test",
+  "passwd": "1234",
+  "src": "testsubpath1/23/06/05.txt",
+  "dest": "destdir/path/directory/dest"
+}</div>
+    <div class="rp-sub">Rename Response</div>
+    <div class="code-blk">{
+  "result_code": "200",
+  "result_msg": "move success",
+  "src": "testsubpath1/23/06/05.txt",
+  "dest": "destdir/path/directory/dest"
+}</div>
+  </div>
+</section>
+
+<span id="upload-download" class="section-anchor"></span>
+<section class="api-section">
+  <div class="api-left">
+    <div class="method-row">
+      <span class="method-badge get">GET</span>
+      <h2 class="api-title">Download</h2>
+    </div>
+    <div class="endpoint-box">http://fileupload.cdn.cloudn.co.kr/download?userid=&amp;passwd=&amp;path=</div>
+    <div class="endpoint-note">※ GET 방식 사용. Content-Type 헤더 불필요. 모든 항목은 URL encoding 값으로 설정.</div>
+    <p class="api-desc">CDN Storage 상의 content를 HTTP protocol로 다운받는 기능입니다. Query parameter로 userid, passwd, path를 설정합니다.</p>
+
+    <div class="param-heading" style="margin-top:0;">요청 파라미터 (URL Query String)</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Required</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">userid</span></td><td><span class="preq y">Y</span></td><td>FTP user id</td><td>ex) test</td></tr>
+      <tr><td><span class="pname">passwd</span></td><td><span class="preq n">택1</span></td><td>FTP user id password</td><td rowspan="2">passwd 또는 auth_token 중 1개 필수</td></tr>
+      <tr><td><span class="pname">auth_token</span></td><td><span class="preq n">택1</span></td><td>FTP user id auth token</td></tr>
+      <tr><td><span class="pname">path</span></td><td><span class="preq y">Y</span></td><td>다운 받을 content file 경로</td><td>URL encoding 필수<br>ex) testsubpath1%2F16%2F06%2F05.txt</td></tr>
+    </table>
+
+    <div class="param-heading">응답 (오류 시)</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">Result_code</span></td><td>Result code</td><td>ex) 400, 401, 403, 404, 500</td></tr>
+      <tr><td><span class="pname">Result_msg</span></td><td>Result message</td><td>ex) does not exists, Directory could not be downloaded, invalid_auth_info, internal server error</td></tr>
+      <tr><td><span class="pname">path</span></td><td>다운 받을 content file 경로</td><td></td></tr>
+    </table>
+  </div>
+  <div class="api-right">
+    <div class="rp-title">Request URL Example</div>
+    <div class="rp-sub">passwd 사용</div>
+    <div class="code-blk">http://fileupload.cdn.cloudn.co.kr/download
+  ?userid=test
+  &passwd=1234
+  &path=testsubpath1%2F16%2F06%2F05.txt</div>
+    <div class="rp-sub">auth_token 사용</div>
+    <div class="code-blk">http://fileupload.cdn.cloudn.co.kr/download
+  ?userid=test
+  &auth_token=abc6e615-6f36-419a-b961-3a0df78f8a96
+  &path=testsubpath1%2F16%2F06%2F05.txt</div>
+    <div class="rp-sub">Error Response (404)</div>
+    <div class="code-blk">{
+  "result_code": "404",
+  "result_msg": "does not exists",
+  "path": "testsubpath1/23/06/05.txt"
+}</div>
+  </div>
+</section>
+
+<span id="upload-put" class="section-anchor"></span>
+<section class="api-section">
+  <div class="api-left">
+    <div class="method-row">
+      <span class="method-badge" style="background:#f0fdf4;color:#15803d;">PUT</span>
+      <h2 class="api-title">Upload (PUT)</h2>
+    </div>
+    <div class="endpoint-box">http://fileupload.cdn.cloudn.co.kr/uploadput?userid=&amp;passwd=&amp;subpath=&amp;filename=</div>
+    <div class="endpoint-note">※ PUT 방식. Content-Type: application/octet-stream 및 Content-Length 헤더 필수. 모든 query 항목은 URL encoding.</div>
+    <p class="api-desc">Client에서 local file을 서버로 HTTP PUT method를 이용하여 upload합니다.</p>
+
+    <div class="param-heading" style="margin-top:0;">요청 파라미터 (URL Query String)</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Required</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">userid</span></td><td><span class="preq y">Y</span></td><td>FTP user id</td><td>ex) test</td></tr>
+      <tr><td><span class="pname">passwd</span></td><td><span class="preq n">택1</span></td><td>FTP user id password</td><td rowspan="2">passwd 또는 auth_token 중 1개 필수</td></tr>
+      <tr><td><span class="pname">auth_token</span></td><td><span class="preq n">택1</span></td><td>FTP user id auth token</td></tr>
+      <tr><td><span class="pname">subpath</span></td><td><span class="preq y">Y</span></td><td>Upload할 컨텐츠가 저장될 directory 경로</td><td>URL encoding 필수<br>ex) testsubpath1%2F16%2F06</td></tr>
+      <tr><td><span class="pname">filename</span></td><td><span class="preq y">Y</span></td><td>Upload할 컨텐츠가 저장될 file name</td><td>ex) 05.txt</td></tr>
+    </table>
+
+    <div class="param-heading">응답 파라미터</div>
+    <table class="param-tbl">
+      <tr><th>Parameter</th><th>Description</th><th>비고</th></tr>
+      <tr><td><span class="pname">Result_code</span></td><td>Result code</td><td>ex) 200, 400, 401, 403, 500</td></tr>
+      <tr><td><span class="pname">Result_msg</span></td><td>Result message</td><td>ex) success, file name isn't defined, Directory(its name is same with file name) exists on remote file path, invalid_auth_info, error in writing file, error in renaming file, internal server error</td></tr>
+      <tr><td><span class="pname">subpath</span></td><td>컨텐츠가 저장된 directory 경로</td><td>ex) testsubpath1/23/06</td></tr>
+      <tr><td><span class="pname">filename</span></td><td>저장된 file name</td><td>ex) 05.txt</td></tr>
+    </table>
+  </div>
+  <div class="api-right">
+    <div class="rp-title">Request URL Example</div>
+    <div class="rp-sub">passwd 사용</div>
+    <div class="code-blk">http://fileupload.cdn.cloudn.co.kr/uploadput
+  ?userid=test
+  &passwd=1234
+  &subpath=testsubpath1%2F16%2F06
+  &filename=05.txt</div>
+    <div class="rp-sub">auth_token 사용</div>
+    <div class="code-blk">http://fileupload.cdn.cloudn.co.kr/uploadput
+  ?userid=test
+  &auth_token=abc6e615-6f36-419a-b961-3a0df78f8a96
+  &subpath=testsubpath1%2F16%2F06
+  &filename=05.txt</div>
+    <div class="rp-sub">Response</div>
+    <div class="code-blk">{
+  "result_code": "200",
+  "result_msg": "success",
+  "subpath": "testsubpath1/23/06",
+  "filename": "05.txt"
+}</div>
+  </div>
+</section>
+
+<span id="upload-errors" class="section-anchor"></span>
+<section class="api-section">
+  <div class="api-left">
+    <h1 class="fs-title" style="margin-bottom:6px;">에러 코드</h1>
+    <p class="api-desc">Upload API 서버의 응답(오류) 코드입니다.</p>
+
+    <div class="param-heading">2XX — 성공</div>
+    <table class="err-tbl">
+      <tr><th>코드</th><th>내역</th><th>비고</th></tr>
+      <tr><td><span class="tag-g">200</span></td><td>요청 성공</td><td>요청에 대한 처리 완료</td></tr>
+    </table>
+
+    <div class="param-heading">4XX — 클라이언트 오류</div>
+    <table class="err-tbl">
+      <tr><th>코드</th><th>내역</th><th>비고</th></tr>
+      <tr><td><span class="tag-r">400</span></td><td>Bad Request</td><td>필수 파라미터 누락 또는 형식 오류 (ex: path is not set)</td></tr>
+      <tr><td><span class="tag-r">401</span></td><td>Unauthorized</td><td>ID/Password 불일치 또는 인증 정보 누락</td></tr>
+      <tr><td><span class="tag-r">403</span></td><td>Forbidden</td><td>권한 없음 (ex: 디렉토리 다운로드 시도 등)</td></tr>
+      <tr><td><span class="tag-r">404</span></td><td>Not Found</td><td>CDN Storage 상에 해당 경로가 존재하지 않음</td></tr>
+    </table>
+
+    <div class="param-heading">5XX — 서버 오류</div>
+    <table class="err-tbl">
+      <tr><th>코드</th><th>내역</th><th>비고</th></tr>
+      <tr><td><span class="tag-r">500</span></td><td>Internal Error</td><td>내부 오류 (ex: error in writing file, error in unzip content)</td></tr>
+    </table>
+  </div>
+  <div class="api-right">
+    <div class="rp-title">에러 응답 예시 (JSON)</div>
+    <div class="code-blk">// 401 — 인증 오류
+{
+  "result_code": "401",
+  "result_msg": "invalid_auth_info"
+}</div>
+    <div class="code-blk" style="margin-top:12px;">// 404 — 경로 없음
+{
+  "result_code": "404",
+  "result_msg": "does not exists",
+  "path": "testsubpath1/23/06/05.txt"
+}</div>
+    <div class="code-blk" style="margin-top:12px;">// 400 — 파라미터 오류
+{
+  "result_code": "400",
+  "result_msg": "path is not set"
+}</div>
+    <div class="ib" style="margin-top:12px;background:#1a2536;border-color:#38bdf8;color:#93c5fd;">💡 에러 발생 시 <code style="background:#0d1117;color:#f87171;">result_code</code>와 <code style="background:#0d1117;color:#f87171;">result_msg</code>로 원인을 확인하십시오.</div>
+  </div>
+</section>
+
+
+<!-- ─── FTP Uploader ─── -->
+
+
+  </main>
+
+</div>
+
+<!-- ── 문의하기 버튼 ── -->
+<a href="https://www.speedykorea.com/contact?utm_source=cdn-manual&utm_medium=docs&utm_campaign=scdn-manual-cta&utm_content=03-upload-api"
+   target="_blank"
+   style="position:fixed;bottom:28px;left:28px;z-index:9999;
+          background:#1a73e8;color:#fff;font-weight:700;font-size:14px;
+          padding:12px 20px;border-radius:50px;text-decoration:none;
+          box-shadow:0 4px 16px rgba(26,115,232,.45);
+          display:flex;align-items:center;gap:8px;">
+  💬 문의하기
+</a>
+
+<script>
+
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║  ★ 다운로드 파일 도메인 설정 ★                              ║
+   ║  웹 서버 배포 시 아래 URL을 해당 도메인으로 변경하세요.      ║
+   ║  예) 'https://docs.speedycdn.com/files/'                   ║
+   ║  로컬 사용 시 빈 문자열('') 그대로 두면 상대경로로 동작합니다. ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+const DOWNLOAD_BASE_URL = '';  // ← ★ 도메인 URL 입력 ★
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (DOWNLOAD_BASE_URL) {
+    document.querySelectorAll('.dl-card[download]').forEach(function(a) {
+      var file = a.getAttribute('href');
+      if (file && !file.startsWith('http')) {
+        a.setAttribute('href', DOWNLOAD_BASE_URL + file);
+      }
+    });
+  }
+});
+
+/* ── 통합 검색 ── */
+const searchIndex = [
+  // ── Statistics API ──
+  {id:'stats-overview',   title:'Statistics API 개요 / 인증',       group:'Statistics API', kw:'통계 api 시스템 개요 인증 statistics overview auth key'},
+  {id:'stats-single-common-params', title:'Single Domain 공통 파라미터', group:'Statistics API', kw:'싱글 도메인 공통 파라미터 single domain common params request'},
+  {id:'stats-transfer',   title:'전송량 (Transfer)',               group:'Statistics API', kw:'전송량 transfer 통계 바이트 byte 트래픽'},
+  {id:'stats-traffic',    title:'Traffic (대역폭)',                 group:'Statistics API', kw:'트래픽 traffic 대역폭 bandwidth bps'},
+  {id:'stats-requestcount', title:'HTTP 요청 건수 (Request Count)', group:'Statistics API', kw:'http 요청 건수 request count 카운트'},
+  {id:'stats-concurrent', title:'동시 접속자 수 / 방문자 수',        group:'Statistics API', kw:'동시 접속자 방문자 concurrent visitor'},
+  {id:'stats-contents',   title:'컨텐츠 정보 (Contents)',           group:'Statistics API', kw:'컨텐츠 콘텐츠 정보 contents url 순위'},
+  {id:'stats-hitcount',   title:'Hit/Miss Count',                  group:'Statistics API', kw:'히트 미스 hit miss count 캐시 cache'},
+  {id:'stats-isp',        title:'ISP / User Agent',                group:'Statistics API', kw:'isp 통신사 user agent 브라우저'},
+  {id:'stats-country',    title:'국가별 요청 건수 (Country)',        group:'Statistics API', kw:'국가 country 요청 건수 지역'},
+  {id:'stats-origin',     title:'Origin 통계',                     group:'Statistics API', kw:'오리진 origin 통계 원본 서버'},
+  {id:'stats-contentserror', title:'40x/50x 컨텐츠 에러',          group:'Statistics API', kw:'40x 50x 에러 error 컨텐츠 contents 404 500'},
+  {id:'stats-httpstatus', title:'HTTP Status 정보별 수',            group:'Statistics API', kw:'http status 상태 코드 200 301 403 404 500'},
+  {id:'stats-originstatus', title:'Origin HTTP Status 정보별 수',   group:'Statistics API', kw:'origin 오리진 http status 상태 코드'},
+  {id:'stats-storage',    title:'스토리지 사용량 (Storage)',         group:'Statistics API', kw:'스토리지 storage 사용량 용량 디스크'},
+  {id:'stats-groupsum',   title:'그룹별 합계 (Group Sum)',          group:'Statistics API', kw:'그룹 group sum 합계 도메인'},
+  {id:'stats-domainlist', title:'도메인 목록 조회',                  group:'Statistics API', kw:'도메인 목록 조회 domain list'},
+  {id:'stats-errors',     title:'Statistics 에러 코드',             group:'Statistics API', kw:'에러 코드 error code statistics 통계'},
+
+  // ── Purge API ──
+  {id:'purge-overview',   title:'Purge API 개요',                  group:'Purge API', kw:'퍼지 purge api 개요 시스템 캐시 삭제 무효화'},
+  {id:'purge-post-purge', title:'Purge 실행 (POST)',               group:'Purge API', kw:'퍼지 purge 실행 post 요청 캐시 삭제'},
+  {id:'purge-get-purge',  title:'Purge 실행 (GET)',                group:'Purge API', kw:'퍼지 purge 실행 get 요청 캐시 삭제'},
+  {id:'purge-post-result', title:'Purge 결과 조회 (POST)',          group:'Purge API', kw:'퍼지 purge 결과 조회 post 상태'},
+  {id:'purge-get-result', title:'Purge 결과 조회 (GET)',            group:'Purge API', kw:'퍼지 purge 결과 조회 get 상태'},
+  {id:'purge-errors',     title:'Purge 에러 코드',                 group:'Purge API', kw:'퍼지 purge 에러 코드 error'},
+
+  // ── Upload API ──
+  {id:'upload-overview',  title:'Upload API 개요',                 group:'Upload API', kw:'업로드 upload api 개요 시스템 스토리지'},
+  {id:'upload-flow',      title:'Upload (flow.js)',                group:'Upload API', kw:'업로드 upload flow.js 파일 전송'},
+  {id:'upload-listup',    title:'Listup — CDN Storage 조회',       group:'Upload API', kw:'리스트 listup cdn storage 조회 파일 목록'},
+  {id:'upload-delete',    title:'Delete — 경로 삭제',               group:'Upload API', kw:'삭제 delete 경로 파일 디렉토리'},
+  {id:'upload-unzip',     title:'UnZIP — 압축 해제',               group:'Upload API', kw:'압축 해제 unzip zip 파일'},
+  {id:'upload-copy',      title:'Copy / Move',                    group:'Upload API', kw:'복사 이동 copy move 파일'},
+  {id:'upload-mkdir',     title:'Mkdir / Rename',                 group:'Upload API', kw:'디렉토리 생성 mkdir rename 이름 변경'},
+  {id:'upload-download',  title:'Download',                       group:'Upload API', kw:'다운로드 download 파일'},
+  {id:'upload-put',       title:'Upload (PUT)',                   group:'Upload API', kw:'업로드 upload put 파일 전송'},
+  {id:'upload-errors',    title:'Upload 에러 코드',                group:'Upload API', kw:'업로드 upload 에러 코드 error'},
+
+  // ── 포털 매뉴얼 ──
+  {id:'portal-overview',  title:'User Portal 사용자 매뉴얼',       group:'포털 매뉴얼', kw:'포털 portal 사용자 매뉴얼 user 개요'},
+  {id:'portal-login',     title:'로그인',                          group:'포털 매뉴얼', kw:'포털 portal 로그인 login 인증'},
+  {id:'portal-apikey',    title:'API Key 관리',                   group:'포털 매뉴얼', kw:'포털 portal api key 키 관리'},
+  {id:'portal-dashboard', title:'대시보드',                         group:'포털 매뉴얼', kw:'포털 portal 대시보드 dashboard 현황'},
+  {id:'portal-traffic',   title:'실시간 트래픽 통계',               group:'포털 매뉴얼', kw:'포털 portal 실시간 트래픽 통계 traffic'},
+  {id:'portal-transfer',  title:'실시간 전송량 통계',               group:'포털 매뉴얼', kw:'포털 portal 실시간 전송량 통계 transfer'},
+  {id:'portal-contents',  title:'컨텐츠 순위',                     group:'포털 매뉴얼', kw:'포털 portal 컨텐츠 콘텐츠 순위 contents'},
+  {id:'portal-request',   title:'Request',                        group:'포털 매뉴얼', kw:'포털 portal request 요청'},
+  {id:'portal-concurrent', title:'동시 접속자',                    group:'포털 매뉴얼', kw:'포털 portal 동시 접속자 concurrent'},
+  {id:'portal-hitrate',   title:'히트율',                          group:'포털 매뉴얼', kw:'포털 portal 히트율 hit rate 캐시'},
+  {id:'portal-visitor',   title:'방문자',                          group:'포털 매뉴얼', kw:'포털 portal 방문자 visitor'},
+  {id:'portal-isp',       title:'ISP 통계',                       group:'포털 매뉴얼', kw:'포털 portal isp 통신사 통계'},
+  {id:'portal-success',   title:'Success 통계',                   group:'포털 매뉴얼', kw:'포털 portal success 성공 통계'},
+  {id:'portal-useragent', title:'User Agent 통계',                group:'포털 매뉴얼', kw:'포털 portal user agent 브라우저 통계'},
+  {id:'portal-country',   title:'국가별 통계',                     group:'포털 매뉴얼', kw:'포털 portal 국가 country 통계'},
+  {id:'portal-storage',   title:'스토리지 사용량',                  group:'포털 매뉴얼', kw:'포털 portal 스토리지 storage 사용량'},
+  {id:'portal-purge',     title:'퍼지 (Purge)',                   group:'포털 매뉴얼', kw:'포털 portal 퍼지 purge 캐시 삭제'},
+  {id:'portal-servicegroup', title:'서비스 그룹 설정',             group:'포털 매뉴얼', kw:'포털 portal 서비스 그룹 설정 service group'},
+  {id:'portal-subaccount', title:'서브 계정 관리',                 group:'포털 매뉴얼', kw:'포털 portal 서브 계정 관리 sub account'},
+  {id:'portal-menuauth',  title:'메뉴 권한 정보',                  group:'포털 매뉴얼', kw:'포털 portal 메뉴 권한 정보 menu auth 권한'},
+  {id:'portal-report',    title:'리포트 설정',                     group:'포털 매뉴얼', kw:'포털 portal 리포트 report 설정 보고서'},
+
+  // ── FTP 업로드 ──
+  {id:'ftp-overview',     title:'FTP 개요',                       group:'FTP 업로드', kw:'ftp 개요 업로드 파일질라 filezilla'},
+  {id:'ftp-install',      title:'설치 및 삭제',                    group:'FTP 업로드', kw:'ftp 설치 삭제 install 파일질라'},
+  {id:'ftp-usage',        title:'사용 방법',                       group:'FTP 업로드', kw:'ftp 사용 방법 usage 접속 연결'},
+  {id:'ftp-charset',      title:'문자셋 설정',                     group:'FTP 업로드', kw:'ftp 문자셋 charset 인코딩 utf-8'},
+  {id:'ftp-sitemanager',  title:'사이트 관리자',                   group:'FTP 업로드', kw:'ftp 사이트 관리자 site manager 내보내기 가져오기'},
+  {id:'ftp-remotecopy',   title:'원격지 파일 관리',                group:'FTP 업로드', kw:'ftp 원격 파일 관리 remote copy'},
+  {id:'ftp-autopurge',    title:'자동 퍼지 기능',                  group:'FTP 업로드', kw:'ftp 자동 퍼지 auto purge 캐시'},
+  {id:'ftp-manualpurge',  title:'수동 퍼지 기능',                  group:'FTP 업로드', kw:'ftp 수동 퍼지 manual purge 캐시'},
+
+  // ── 캐시설정 ──
+  {id:'cache-overview',   title:'CDN 기본 설정 / IP대역 / Speed Limit', group:'캐시설정 가이드', kw:'캐시 cache cdn 기본 설정 ip 대역 speed limit'},
+  {id:'cache-default',    title:'CDN 기본 설정',                   group:'캐시설정 가이드', kw:'캐시 cache cdn 기본 설정 ttl 만료'},
+  {id:'cache-retention',  title:'조회기간 별 보관기간',             group:'캐시설정 가이드', kw:'조회 기간 보관 기간 retention 데이터'},
+  {id:'cache-edge',       title:'CDN 엣지 대역',                  group:'캐시설정 가이드', kw:'cdn 엣지 edge 대역 ip 서버'},
+  {id:'cache-ratelimit',  title:'Rate Limit',                     group:'캐시설정 가이드', kw:'rate limit 제한 요청 속도 캐시'},
+  {id:'cache-speedlimit', title:'Speed Limit',                    group:'캐시설정 가이드', kw:'speed limit 속도 제한 대역폭 캐시'},
+
+  // ── CDN 문진표 ──
+  {id:'checklist-overview',    title:'CDN 서비스 문진표',           group:'CDN 문진표', kw:'cdn 서비스 문진표 checklist 체크리스트'},
+  {id:'checklist-initial',     title:'캐시 서비스 초기 문진표',     group:'CDN 문진표', kw:'캐시 서비스 초기 문진표 initial checklist'},
+  {id:'checklist-setup-basic', title:'셋업 문진표 — 기본사항',     group:'CDN 문진표', kw:'셋업 setup 문진표 기본 사항 basic checklist'},
+  {id:'checklist-setup-option', title:'셋업 문진표 — 선택사항',    group:'CDN 문진표', kw:'셋업 setup 문진표 선택 사항 option checklist'},
+
+  // ── CDN 기초 ──
+  {id:'cdn-how-it-works', title:'CDN 동작 원리 / Cache HIT·MISS',  group:'CDN 기초', kw:'cdn 동작 원리 cache hit miss 캐시 엣지 오리진'},
+  {id:'cert-overview',    title:'인증서 개요 (SSL/TLS)',            group:'CDN 기초', kw:'인증서 ssl tls certificate 개요 dv ov ev'},
+  {id:'cert-deploy',      title:'인증서 적용 / 갱신',               group:'CDN 기초', kw:'인증서 적용 갱신 deploy renewal csr openssl'},
+  {id:'cert-casestudy',   title:'인증서 실무 사례',                 group:'CDN 기초', kw:'인증서 실무 사례 case study 와일드카드 wildcard'},
+  {id:'cname-overview',   title:'CNAME 개요 / 형식',               group:'CDN 기초', kw:'cname 개요 형식 dns 도메인 포인팅'},
+  {id:'cname-setup',      title:'CNAME 설정 / 확인',               group:'CDN 기초', kw:'cname 설정 확인 dns 레코드 nslookup dig'},
+  {id:'cname-cautions',   title:'CNAME 주의사항',                   group:'CDN 기초', kw:'cname 주의사항 ttl dns 전파 apex root'},
+
+  // ── Storage Mount ──
+  {id:'mount-overview',   title:'Storage Mount 개요',              group:'Storage Mount', kw:'스토리지 mount 마운트 개요 rclone ftp sftp'},
+  {id:'mount-linux-ftp',  title:'Storage Mount (Linux)',           group:'Storage Mount', kw:'리눅스 linux mount 마운트 rclone ftp sftp fuse'},
+  {id:'mount-windows',    title:'Storage Mount (Windows)',         group:'Storage Mount', kw:'윈도우 windows mount 마운트 filezilla ftp'},
+  {id:'mount-cloud',      title:'Storage Mount (Cloud)',           group:'Storage Mount', kw:'클라우드 cloud mount s3fs nhn object storage'},
+  {id:'mount-errors',     title:'Storage Mount 에러',              group:'Storage Mount', kw:'스토리지 mount 마운트 에러 error fuse 트러블슈팅'},
+
+  // ── Origin 통계 ──
+  {id:'origstat-overview', title:'Origin Statistics 개요',          group:'Origin 통계', kw:'오리진 origin statistics 통계 개요 원본'},
+  {id:'origstat-requestcount', title:'Origin Request Count',       group:'Origin 통계', kw:'오리진 origin request count 요청 건수'},
+  {id:'origstat-content',  title:'Origin Content 정보',            group:'Origin 통계', kw:'오리진 origin content 컨텐츠 정보'},
+  {id:'origstat-usecase',  title:'Origin 통계 활용 사례',           group:'Origin 통계', kw:'오리진 origin 통계 활용 사례 usecase 분석'},
+
+  // ── 스트리밍 ──
+  {id:'stream-overview',  title:'스트리밍 개요',                    group:'스트리밍', kw:'스트리밍 streaming 개요 hls rtmp vod live'},
+  {id:'stream-live-hls',  title:'LIVE HLS',                       group:'스트리밍', kw:'라이브 live hls m3u8 ts 세그먼트 wowza'},
+  {id:'stream-live-rtmp', title:'LIVE RTMP',                      group:'스트리밍', kw:'라이브 live rtmp 1935 인코더 obs wowza'},
+  {id:'stream-vod-hls',   title:'VOD HLS',                        group:'스트리밍', kw:'vod hls m3u8 다시보기 adaptive bitrate'},
+  {id:'stream-vod-mp4',   title:'VOD MP4 (PD)',                   group:'스트리밍', kw:'vod mp4 progressive download pd 다운로드'},
+
+  // ── Contact ──
+  {id:'contact',          title:'Contact',                        group:'Contact', kw:'contact 연락처 문의 이메일 전화'},
+];
+
+function doSearch(query, resultsEl, isDash) {
+  if (!query.trim()) { resultsEl.classList.remove('show'); return; }
+  const tokens = query.toLowerCase().split(/\s+/);
+  const matches = searchIndex.filter(item =>
+    tokens.every(t => item.kw.includes(t))
+  );
+  const itemCls  = isDash ? 'dash-search-item' : 'sb-search-item';
+  const titleCls = isDash ? 'dsi-title' : 'sri-title';
+  const groupCls = isDash ? 'dsi-group' : 'sri-group';
+
+  if (!matches.length) {
+    resultsEl.innerHTML = '<div class="' + itemCls + '"><div class="' + titleCls + '" style="color:#6e7681">검색 결과 없음</div></div>';
+  } else {
+    resultsEl.innerHTML = matches.map(m =>
+      '<div class="' + itemCls + '" data-id="' + m.id + '">' +
+      '<div class="' + titleCls + '">' + m.title + '</div>' +
+      '<div class="' + groupCls + '">' + m.group + '</div></div>'
+    ).join('');
+  }
+  resultsEl.classList.add('show');
+}
+
+/* 이벤트 바인딩 */
+document.addEventListener('DOMContentLoaded', function() {
+  const sbInput   = document.getElementById('sidebarSearch');
+  const sbResults = document.getElementById('sidebarResults');
+  const dsInput   = document.getElementById('dashSearch');
+  const dsResults = document.getElementById('dashResults');
+  const scroller  = document.getElementById('mainScroll');
+
+  function handleInput(input, results, isDash) {
+    input.addEventListener('input', function() {
+      doSearch(this.value, results, isDash);
+    });
+  }
+  if (sbInput && sbResults) handleInput(sbInput, sbResults, false);
+  if (dsInput && dsResults) handleInput(dsInput, dsResults, true);
+
+  function handleClick(resultsEl, inputEl) {
+    resultsEl.addEventListener('click', function(e) {
+      const item = e.target.closest('[data-id]');
+      if (!item) return;
+      const target = document.getElementById(item.dataset.id);
+      if (target && scroller) {
+        scroller.scrollTo({ top: target.offsetTop - 16, behavior: 'instant' });
+      }
+      resultsEl.classList.remove('show');
+      inputEl.value = '';
+    });
+  }
+  if (sbResults && sbInput) handleClick(sbResults, sbInput);
+  if (dsResults && dsInput) handleClick(dsResults, dsInput);
+
+  /* 외부 클릭 시 닫기 */
+  document.addEventListener('click', function(e) {
+    if (sbResults && !e.target.closest('.sb-search')) sbResults.classList.remove('show');
+    if (dsResults && !e.target.closest('.dash-search')) dsResults.classList.remove('show');
+  });
+
+  /* ESC 키 */
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      if (sbResults) { sbResults.classList.remove('show'); sbInput.value = ''; }
+      if (dsResults) { dsResults.classList.remove('show'); dsInput.value = ''; }
+    }
+  });
+});
+
+
+function switchTab(btn, group, type) {
+  const section = btn.closest('.api-right');
+  section.querySelectorAll('.rp-tab').forEach(t => t.classList.remove('active'));
+  section.querySelectorAll('.rp-pane').forEach(p => p.classList.remove('show'));
+  btn.classList.add('active', type);
+  const pane = section.querySelector('#' + group + '-' + type);
+  if (pane) pane.classList.add('show');
+}
+
+function toggleGroup(hdr) {
+  hdr.classList.toggle('open');
+  hdr.nextElementSibling.classList.toggle('open');
+}
+function toggleCat(hdr) {
+  hdr.classList.toggle('open');
+  hdr.nextElementSibling.classList.toggle('open');
+}
+
+const anchors = document.querySelectorAll('.section-anchor[id]');
+const links   = document.querySelectorAll('.sb-link[href^="#"], .sb-page-link[href^="#"], .sb-contact-link[href^="#"]');
+const scroller = document.getElementById('mainScroll');
+
+function updateActive() {
+  let current = '';
+  anchors.forEach(a => {
+    if (a.getBoundingClientRect().top <= 80) current = a.id;
+  });
+  let activeTreeBody = null;
+  let activeCatBody = null;
+  links.forEach(l => {
+    const match = l.getAttribute('href') === '#' + current;
+    l.classList.toggle('active', match);
+    if (match) {
+      activeTreeBody = l.closest('.sb-tree-body');
+      activeCatBody = l.closest('.sb-cat-body');
+    }
+  });
+  if (!activeTreeBody && !activeCatBody) return;
+  // Close all tree bodies/cat bodies, then open only the active one
+  document.querySelectorAll('.sb-tree-body.open').forEach(b => {
+    if (b !== activeTreeBody) {
+      b.classList.remove('open');
+      b.previousElementSibling.classList.remove('open');
+    }
+  });
+  document.querySelectorAll('.sb-cat-body.open').forEach(b => {
+    if (b !== activeCatBody) {
+      b.classList.remove('open');
+      b.previousElementSibling.classList.remove('open');
+    }
+  });
+  if (activeTreeBody && !activeTreeBody.classList.contains('open')) {
+    activeTreeBody.classList.add('open');
+    activeTreeBody.previousElementSibling.classList.add('open');
+  }
+  if (activeCatBody && !activeCatBody.classList.contains('open')) {
+    activeCatBody.classList.add('open');
+    activeCatBody.previousElementSibling.classList.add('open');
+  }
+}
+scroller.addEventListener('scroll', updateActive);
+updateActive();
+
+links.forEach(l => {
+  l.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(l.getAttribute('href'));
+    if (target) scroller.scrollTo({ top: target.offsetTop - 16, behavior: 'instant' });
+  });
+});
+
+// Dashboard card smooth scroll
+document.querySelectorAll('.dash-card[href^="#"]').forEach(c => {
+  c.addEventListener('click', e => {
+    e.preventDefault();
+    const target = document.querySelector(c.getAttribute('href'));
+    if (target) scroller.scrollTo({ top: target.offsetTop - 16, behavior: 'instant' });
+  });
+});
+
+// Scroll to top (dashboard) on page load
+scroller.scrollTop = 0;
+
+/* ── api-right 내 code-blk에 Copy 버튼 일괄 삽입 ── */
+document.querySelectorAll('.api-right .code-blk').forEach(function(blk) {
+  // 이미 Copy 버튼이 있는 경우 스킵 (엣지 대역 등 수동 추가분)
+  if (blk.previousElementSibling && blk.previousElementSibling.querySelector && blk.previousElementSibling.querySelector('button')) return;
+  var wrapper = document.createElement('div');
+  wrapper.style.position = 'relative';
+  blk.parentNode.insertBefore(wrapper, blk);
+  wrapper.appendChild(blk);
+  var btn = document.createElement('button');
+  btn.textContent = 'Copy';
+  btn.className = 'copy-btn';
+  btn.addEventListener('click', function() {
+    navigator.clipboard.writeText(blk.innerText).then(function() {
+      btn.textContent = 'Copied!';
+      btn.style.background = '#238636';
+      btn.style.borderColor = '#2ea043';
+      setTimeout(function() { btn.textContent = 'Copy'; btn.style.background = ''; btn.style.borderColor = ''; }, 1500);
+    });
+  });
+  wrapper.appendChild(btn);
+});
+
+</script>
+
+<!-- Lightbox overlay -->
+<div id="lightbox-overlay" onclick="closeLightbox()">
+  <span id="lightbox-close" onclick="closeLightbox()">&times;</span>
+  <img id="lightbox-img" src="" alt="확대 이미지">
+</div>
+
+<script>
+function openLightbox(imgEl) {
+  var overlay = document.getElementById('lightbox-overlay');
+  var lbImg = document.getElementById('lightbox-img');
+  lbImg.src = imgEl.src;
+  lbImg.alt = imgEl.alt || '확대 이미지';
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  document.getElementById('lightbox-overlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeLightbox();
+});
+</script>
+</body>
+</html>
