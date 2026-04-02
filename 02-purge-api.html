@@ -310,6 +310,104 @@ code{font-family:'Fira Code',monospace;background:#f1f3f6;color:#cf222e;padding:
 
 @media(max-width:1200px){
   .api-section{grid-template-columns:1fr;}
+
+/* ── Mobile hamburger button ── */
+.mobile-menu-btn{
+  display:none;
+  position:fixed;top:12px;left:12px;z-index:1100;
+  width:44px;height:44px;border-radius:10px;
+  background:#0d1117;border:1px solid #30363d;
+  color:#e6edf3;font-size:22px;
+  align-items:center;justify-content:center;
+  cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);
+  line-height:1;
+}
+.mobile-menu-btn.active{background:#161b22;color:#58a6ff;}
+
+/* ── Mobile sidebar overlay ── */
+.sidebar-overlay{
+  display:none;position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,.6);z-index:999;
+}
+.sidebar-overlay.show{display:block;}
+
+/* ── Mobile responsive ── */
+@media(max-width:768px){
+  .mobile-menu-btn{display:flex !important;}
+
+  .app{display:block !important;overflow-y:auto !important;overflow-x:hidden !important;}
+
+  .sidebar{
+    display:none !important;
+    position:fixed !important;
+    top:0;left:0;bottom:0;
+    z-index:1000;
+    width:280px;
+    height:100vh !important;
+    overflow-y:auto !important;
+  }
+  .sidebar.mobile-open{
+    display:flex !important;
+    flex-direction:column !important;
+  }
+
+  .main{
+    width:100% !important;
+    margin-left:0 !important;
+    height:auto !important;
+    overflow-y:auto !important;
+  }
+
+  .full-section{padding:24px 16px 32px;}
+  .api-section{grid-template-columns:1fr !important;}
+  .api-left{padding:24px 16px 32px;}
+  .api-right{padding:24px 16px 28px;position:static !important;height:auto !important;}
+  .api-group-header{padding:10px 16px;font-size:10px;}
+
+  .dashboard{padding:70px 16px 40px;}
+  .dash-header h1{font-size:22px;}
+  .dash-header p{font-size:13px;}
+  .dash-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;}
+  .dash-card{padding:20px 16px 18px;}
+  .dash-icon{width:48px;height:48px;font-size:22px;}
+  .dash-card-title{font-size:13px;}
+  .dash-card-desc{font-size:11px;}
+
+  .api-title{font-size:18px;}
+  .fs-title{font-size:20px;}
+
+  .param-tbl, .feat-tbl, .env-tbl, .err-tbl{
+    display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;
+  }
+
+  .info-grid{grid-template-columns:1fr;}
+  .step-grid{grid-template-columns:1fr;}
+  .feature-list{grid-template-columns:1fr;}
+  .dl-grid{grid-template-columns:1fr;}
+  .flow{gap:4px;}
+  .flow-item{padding:6px 12px;font-size:.78rem;}
+
+  .endpoint-box{font-size:11px;padding:10px 12px;}
+  .code-blk{font-size:.65rem;padding:12px 12px;}
+
+  .method-row{flex-wrap:wrap;gap:8px;}
+
+  .dash-search input{font-size:14px;padding:10px 14px 10px 38px;}
+
+  .sb-header{padding:14px 16px 12px;}
+}
+
+@media(max-width:480px){
+  .dash-grid{grid-template-columns:1fr 1fr;gap:10px;}
+  .dash-card{padding:16px 12px 14px;border-radius:10px;}
+  .dash-icon{width:40px;height:40px;font-size:18px;border-radius:10px;}
+  .dash-card-title{font-size:12px;}
+  .dash-card-desc{display:none;}
+
+  .full-section{padding:20px 14px 28px;}
+  .api-left{padding:20px 14px 28px;}
+}
   .api-right{position:static;height:auto;}
 }
 
@@ -492,9 +590,14 @@ code{font-family:'Fira Code',monospace;background:#f1f3f6;color:#cf222e;padding:
 
 <body>
 <div class="app">
+<!-- Mobile hamburger button -->
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="메뉴 열기">☰</button>
+<!-- Mobile sidebar overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
 
   <!-- ── 사이드바 ── -->
-  <nav class="sidebar">
+  <nav class="sidebar" id="sidebar">
     <div class="sb-header" style="cursor:default;">
       <img src="https://www.speedykorea.com/images/logo/speedy-logo-white.svg" alt="Speedy" onerror="this.style.display='none'">
       <div>
@@ -1397,6 +1500,22 @@ function closeLightbox() {
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeLightbox();
 });
+</script>
+<script>
+/* Mobile menu toggle */
+(function(){
+  var btn = document.getElementById('mobileMenuBtn');
+  var sidebar = document.getElementById('sidebar');
+  var overlay = document.getElementById('sidebarOverlay');
+  if(!btn||!sidebar||!overlay) return;
+  function openMenu(){ sidebar.classList.add('mobile-open'); overlay.classList.add('show'); btn.classList.add('active'); btn.textContent='✕'; }
+  function closeMenu(){ sidebar.classList.remove('mobile-open'); overlay.classList.remove('show'); btn.classList.remove('active'); btn.textContent='☰'; }
+  btn.addEventListener('click', function(){ sidebar.classList.contains('mobile-open') ? closeMenu() : openMenu(); });
+  overlay.addEventListener('click', closeMenu);
+  sidebar.querySelectorAll('.sb-link, .sb-page-link, .sb-contact-link').forEach(function(l){
+    l.addEventListener('click', function(){ if(window.innerWidth<=768) closeMenu(); });
+  });
+})();
 </script>
 </body>
 </html>
