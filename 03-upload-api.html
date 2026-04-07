@@ -1457,7 +1457,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!item) return;
       const target = document.getElementById(item.dataset.id);
       if (target && scroller) {
-        smartScrollTo(target);
+        scroller.scrollTo({ top: target.offsetTop - 16, behavior: 'instant' });
       }
       resultsEl.classList.remove('show');
       inputEl.value = '';
@@ -1503,14 +1503,6 @@ function toggleCat(hdr) {
 const anchors = document.querySelectorAll('.section-anchor[id]');
 const links   = document.querySelectorAll('.sb-link[href^="#"], .sb-page-link[href^="#"], .sb-contact-link[href^="#"]');
 const scroller = document.getElementById('mainScroll');
-function isMobile(){return window.innerWidth<=768;}
-function smartScrollTo(target){
-  if(isMobile()){
-    target.scrollIntoView({behavior:'smooth',block:'start'});
-  } else {
-    scroller.scrollTo({top:target.offsetTop-16,behavior:'instant'});
-  }
-}
 
 function updateActive() {
   let current = '';
@@ -1551,14 +1543,13 @@ function updateActive() {
   }
 }
 scroller.addEventListener('scroll', updateActive);
-window.addEventListener('scroll', function(){if(isMobile())updateActive();});
 updateActive();
 
 links.forEach(l => {
   l.addEventListener('click', e => {
     e.preventDefault();
     const target = document.querySelector(l.getAttribute('href'));
-    if (target) smartScrollTo(target);
+    if (target) scroller.scrollTo({ top: target.offsetTop - 16, behavior: 'instant' });
   });
 });
 
@@ -1567,7 +1558,7 @@ document.querySelectorAll('.dash-card[href^="#"]').forEach(c => {
   c.addEventListener('click', e => {
     e.preventDefault();
     const target = document.querySelector(c.getAttribute('href'));
-    if (target) smartScrollTo(target);
+    if (target) scroller.scrollTo({ top: target.offsetTop - 16, behavior: 'instant' });
   });
 });
 
@@ -1633,21 +1624,7 @@ document.addEventListener('keydown', function(e) {
   btn.addEventListener('click', function(){ sidebar.classList.contains('mobile-open') ? closeMenu() : openMenu(); });
   overlay.addEventListener('click', closeMenu);
   sidebar.querySelectorAll('.sb-link, .sb-page-link, .sb-contact-link').forEach(function(l){
-    l.addEventListener('click', function(e){
-      if(window.innerWidth<=768){
-        closeMenu();
-        var href=l.getAttribute('href');
-        if(href&&href.startsWith('#')){
-          e.preventDefault();
-          var target=document.querySelector(href);
-          if(target){
-            setTimeout(function(){
-              window.scrollTo({top:target.getBoundingClientRect().top+window.pageYOffset-16,behavior:'smooth'});
-            },300);
-          }
-        }
-      }
-    });
+    l.addEventListener('click', function(){ if(window.innerWidth<=768) closeMenu(); });
   });
 })();
 </script>
