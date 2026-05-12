@@ -860,6 +860,7 @@ code{font-family:'Fira Code',monospace;background:#f1f3f6;color:#cf222e;padding:
 
     
     <div class="param-heading" style="margin-top:0;">요청 파라미터 (POST JSON)</div>
+    <div class="ib" style="margin-bottom:12px;">※ 실제 Request body는 PDF 매뉴얼 부록의 요청 예시와 동일하게 최상위 <code>api_request</code> 객체로 감싸서 전송합니다.</div>
     <table class="param-tbl">
       <tr><th>구분</th><th>Parameter</th><th>Required</th><th>Description</th><th>비고</th></tr>
       <tr>
@@ -992,73 +993,91 @@ code{font-family:'Fira Code',monospace;background:#f1f3f6;color:#cf222e;padding:
     <div class="rp-domain single">🔷 Single Domain</div>
     <div class="rp-sub">Request (POST JSON)</div>
     <div class="code-blk">{
-  "common": {
-    "id": "testuser_01",
-    "cloud_key_value": "ap5ik30eys72ample9"
-  },
-  "data": {
-    "domain_name": "www.example.com",
-    "start_date": "202512300000",
-    "end_date": "202512310000",
-    "date_interval": "2"
+  "api_request": {
+    "common": {
+      "action_date": "2025-12-31T09:00:00+09:00",
+      "service_name": "cdn",
+      "version": "1.0.0",
+      "id": "testuser_01",
+      "cloud_key_value": "ap5ik30eys72ample9"
+    },
+    "data": {
+      "domain_name": "www.example.com",
+      "start_date": "202512300000",
+      "end_date": "202512310000",
+      "date_interval": "2"
+    }
   }
 }</div>
     <div class="rp-sub">Response</div>
     <div class="code-blk">{
-  "common": {
-    "action_date": "2025-12-31T09:00:00+00:00",
-    "service_name": "cdn",
-    "version": "1.0.0"
-  },
-  "data": {
-    "domain_name": "www.example.com",
-    "result_code": "200",
-    "result_msg": "success",
-    "transfer": [
-      {"202512301700": "10241768"},
-      {"202512301800": "20487625"}
-    ]
+  "api_response": {
+    "common": {
+      "action_date": "2025-12-31T09:00:00+00:00",
+      "service_name": "cdn",
+      "version": "1.0.0"
+    },
+    "data": {
+      "action_result": {
+        "domain_name": "www.example.com",
+        "result_code": "200",
+        "result_msg": "success",
+        "transfer": [
+          {"202512301700": "10241768"},
+          {"202512301800": "20487625"}
+        ]
+      }
+    }
   }
 }</div>
     <div class="rp-domain total" style="margin-top:20px;">🔶 Total Domain</div>
     <div class="rp-sub">Request (POST JSON)</div>
     <div class="code-blk">{
-  "common": {
-    "id": "testuser_01",
-    "cloud_key_value": "ap5ik30eys72ample9"
-  },
-  "data": {
-    "start_date": "202512300000",
-    "end_date": "202512310000",
-    "date_interval": "3"
+  "api_request": {
+    "common": {
+      "action_date": "2025-12-31T09:00:00+09:00",
+      "service_name": "cdn",
+      "version": "1.0.0",
+      "id": "testuser_01",
+      "cloud_key_value": "ap5ik30eys72ample9"
+    },
+    "data": {
+      "start_date": "202512300000",
+      "end_date": "202512310000",
+      "date_interval": "3"
+    }
   }
 }</div>
     <div class="rp-sub">Response</div>
     <div class="code-blk">{
-  "common": {
-    "action_date": "2025-12-31T09:00:00+00:00",
-    "service_name": "cdn",
-    "version": "1.0.0"
-  },
-  "data": {
-    "result_code": "200",
-    "result_msg": "success",
-    "totaldomain": [
-      {
-        "domain_name": "www.example.com",
-        "transfer": [
-          {"20251230": "10241768"},
-          {"20251231": "20487625"}
-        ]
-      },
-      {
-        "domain_name": "www.example2.com",
-        "transfer": [
-          {"20251230": "5120884"},
-          {"20251231": "10244312"}
+  "api_response": {
+    "common": {
+      "action_date": "2025-12-31T09:00:00+00:00",
+      "service_name": "cdn",
+      "version": "1.0.0"
+    },
+    "data": {
+      "action_result": {
+        "result_code": "200",
+        "result_msg": "success",
+        "totaldomain": [
+          {
+            "domain_name": "www.example.com",
+            "transfer": [
+              {"20251230": "10241768"},
+              {"20251231": "20487625"}
+            ]
+          },
+          {
+            "domain_name": "www.example2.com",
+            "transfer": [
+              {"20251230": "5120884"},
+              {"20251231": "10244312"}
+            ]
+          }
         ]
       }
-    ]
+    }
   }
 }</div>
   </div>
